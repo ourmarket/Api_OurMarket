@@ -1,4 +1,5 @@
 const allowedOrigins = [
+	'https://tpv-ourmarket.netlify.app',
 	'https://dr-dashboard.netlify.app',
 	'https://www.distribuidora-ringo.com.ar',
 	'https://dr-distribution-app.netlify.app',
@@ -18,7 +19,7 @@ const allowedOrigins = [
 	'http://localhost:5174',
 	'https://our-market-dashsboard-full.netlify.app',
 	'https://our-market-tpv.netlify.app',
-	'https://tpv-ourmarket.netlify.app'
+	
 ];
 
 module.exports = allowedOrigins;
