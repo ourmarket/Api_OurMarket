@@ -14,6 +14,11 @@ const EmployeeSchema = Schema(
 		city: { type: String },
 		zip: { type: Number },
 		state: { type: Boolean, default: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

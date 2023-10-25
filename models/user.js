@@ -24,6 +24,11 @@ const UserSchema = Schema(
 			ref: 'Role',
 			default: '636a6311c2e277ca644463fb',
 		},
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

@@ -558,6 +558,7 @@ const loginAdmin = async (req, res) => {
 				UserInfo: {
 					id: foundUser._id,
 					role: role.role,
+					superUser: foundUser.superUser,
 				},
 			},
 			process.env.JWT_SECRET,
@@ -568,6 +569,7 @@ const loginAdmin = async (req, res) => {
 				UserInfo: {
 					id: foundUser._id,
 					role: role.role,
+					superUser: foundUser.superUser,
 				},
 			},
 			process.env.JWT_REFRESH,
@@ -616,6 +618,7 @@ const loginAdmin = async (req, res) => {
 		return res.status(200).json({
 			accessToken,
 			id: foundUser._id,
+			superUser: foundUser.superUser,
 		});
 	} else {
 		return res.status(401).json({
@@ -694,6 +697,7 @@ const refresh = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser,
 					},
 				},
 				process.env.JWT_SECRET,
@@ -730,6 +734,7 @@ const refresh = async (req, res) => {
 			return res.status(200).json({
 				accessToken,
 				id: foundUser._id,
+				superUser: foundUser.superUser,
 				clientType: client?.clientType?.clientType,
 			});
 		});

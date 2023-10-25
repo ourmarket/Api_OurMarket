@@ -8,21 +8,19 @@ const { getEmailTemplate } = require('../template/emailTemplate');
 
 const getUsers = async (req = request, res = response) => {
 	try {
-		const { limit = 100000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, users] = await Promise.all([
-			User.countDocuments(query),
-			User.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('role', 'role'),
-		]);
+		const users = await User.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		}).populate('role', 'role');
+
 		res.status(200).json({
 			ok: true,
 			status: 200,
 			data: {
-				total,
+				total: users.length,
 				users,
 			},
 		});

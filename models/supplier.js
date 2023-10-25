@@ -11,6 +11,11 @@ const SupplierSchema = Schema(
 		city: { type: String },
 		zip: { type: String },
 		state: { type: Boolean, default: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

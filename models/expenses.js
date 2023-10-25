@@ -8,6 +8,12 @@ const ExpensesSchema = Schema(
 		date: { type: Date },
 
 		state: { type: Boolean, default: true },
+
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

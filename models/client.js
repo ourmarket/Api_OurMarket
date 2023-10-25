@@ -20,6 +20,11 @@ const ClientSchema = Schema(
 		state: { type: Boolean, default: true, required: true },
 		points: { type: Number, default: 0 },
 		active: { type: Boolean, default: false },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

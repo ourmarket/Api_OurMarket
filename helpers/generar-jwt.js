@@ -34,9 +34,21 @@ const getToken = (payload) => {
 
 const getTokenData = (token) => {
 	let data = null;
-	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+	jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
 		if (err) {
-			console.log('Error al obtener data del token');
+			console.log('Error al obtener data del token', err);
+		} else {
+			data = decoded;
+		}
+	});
+
+	return data;
+};
+const getRefreshTokenData = (token) => {
+	let data = null;
+	jwt.verify(token, process.env.JWT_REFRESH, async (err, decoded) => {
+		if (err) {
+			console.log('Error al obtener data del token', err);
 		} else {
 			data = decoded;
 		}
@@ -48,4 +60,5 @@ const getTokenData = (token) => {
 module.exports = {
 	getToken,
 	getTokenData,
+	getRefreshTokenData,
 };

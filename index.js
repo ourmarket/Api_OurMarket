@@ -68,15 +68,11 @@ ordersSocket(io);
 
 // -------------routes-----------
 app.use('/api/auth', require('./routes/auth'));
-app.use("/api/buscar'", require('./routes/buscar'));
 app.use('/api/categories', require('./routes/category'));
-app.use('/api/brand', require('./routes/brand'));
 app.use('/api/products', require('./routes/product'));
 app.use('/api/user', require('./routes/user'));
-app.use('/api/uploads', require('./routes/uploads'));
 
 app.use('/api/orders', require('./routes/orders'));
-app.use('/api/auth/repartidores', require('./routes/repartidores'));
 app.use('/api/suppliers', require('./routes/supplier'));
 app.use('/api/product_lot', require('./routes/productLot'));
 app.use('/api/oferts', require('./routes/ofert'));
@@ -104,6 +100,7 @@ app.use('/api/orderActive', require('./routes/ordersActive'));
 app.use('/api/config', require('./routes/config'));
 
 app.use('/api/expenses', require('./routes/expenses'));
+app.use('/api/superUser', require('./routes/superUser'));
 
 // -----------error----------------
 app.use(errorHandler);

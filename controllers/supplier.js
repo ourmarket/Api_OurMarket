@@ -1,20 +1,21 @@
+/* eslint-disable no-unused-vars */
 const { response } = require('express');
 const { Supplier } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getSuppliers = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, suppliers] = await Promise.all([
-			Supplier.countDocuments(query),
-			Supplier.find(query).skip(Number(from)).limit(Number(limit)),
-		]);
+		const suppliers = await Supplier.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
 			data: {
 				suppliers,
 			},

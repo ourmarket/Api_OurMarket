@@ -20,6 +20,11 @@ const CategorySchema = Schema(
 			ref: 'User',
 			required: true,
 		},
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );
