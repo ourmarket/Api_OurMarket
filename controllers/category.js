@@ -1,23 +1,21 @@
 const { response } = require('express');
 const { Category } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getCategories = async (req, res = response) => {
 	try {
-		const { limit = 100, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, categories] = await Promise.all([
-			Category.countDocuments(query),
-			Category.find(query)
-				.populate('user', 'name')
-				.skip(Number(from))
-				.limit(Number(limit)),
-		]);
+		const categories = await Category.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		}).populate('user', 'name');
 
 		return res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: categories.length,
 			categories,
 		});
 	} catch (error) {
@@ -51,6 +49,8 @@ const getCategory = async (req, res = response) => {
 const postCategory = async (req, res = response) => {
 	try {
 		const { name, img } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const categoryDB = await Category.findOne({ name });
 
@@ -65,6 +65,7 @@ const postCategory = async (req, res = response) => {
 			name,
 			img,
 			user: req.user,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const category = new Category(data);
