@@ -53,6 +53,8 @@ const getSupplier = async (req, res = response) => {
 const postSupplier = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const supplierDB = await Supplier.findOne({
 			businessName: body.businessName,
@@ -67,6 +69,7 @@ const postSupplier = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const supplier = new Supplier(data);

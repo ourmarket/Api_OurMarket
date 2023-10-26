@@ -4,6 +4,7 @@ const { response } = require('express');
 const { Order, Product } = require('../models');
 const { Client } = require('../models');
 const { ObjectId } = require('mongodb');
+const { getTokenData } = require('../helpers');
 
 // ordenes, total, por mes, por dia
 
@@ -11,12 +12,15 @@ const { ObjectId } = require('mongodb');
 const reportTotalOrdersByMonth = async (req, res = response) => {
 	try {
 		const { client = '' } = req.query;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		if (!client) {
 			const report = await Order.aggregate([
 				{
 					$match: {
 						state: true,
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -105,6 +109,7 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -198,10 +203,13 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 
 const reportTotalOrdersByDay = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -285,10 +293,14 @@ const reportTotalOrdersByDay = async (req, res = response) => {
 };
 const reportTotalOrders = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -337,10 +349,14 @@ const reportTotalOrders = async (req, res = response) => {
 // Limitado desde el 21/03/2023
 const reportTotalOrders21_03 = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -428,10 +444,14 @@ const reportTotalOrders21_03 = async (req, res = response) => {
 // productos, total, por mes, por dia
 const reportTotalOrdersProducts = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -517,10 +537,14 @@ const reportTotalOrdersProducts = async (req, res = response) => {
 
 const reportTotalOrdersProductsByDay = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -617,10 +641,14 @@ const reportTotalOrdersProductsByDay = async (req, res = response) => {
 };
 const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -690,11 +718,15 @@ const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 };
 const reportTotalOrdersProductsByRange = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const { from, to } = req.body; // "Tue, 21 Mar 2023 00:00:00 GMT"
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -768,11 +800,14 @@ const reportTotalOrdersProductsByRange = async (req, res = response) => {
 const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
-		console.log(from, to); // "Tue, 21 Mar 2023 00:00:00 GMT"
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -859,6 +894,9 @@ const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 const reportTotalIndividualProduct = async (req, res = response) => {
 	const { id } = req.params;
 	const { client } = req.query;
+	const jwt = req.cookies.jwt;
+	const tokenData = getTokenData(jwt);
+
 	try {
 		let totals;
 		let byMonth;
@@ -868,6 +906,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -946,6 +985,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1032,6 +1072,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1109,6 +1150,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1211,14 +1253,19 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 const reportTotalIndividualProductLast30days = async (req, res = response) => {
 	const { id } = req.params;
 	const { client } = req.query;
+
 	try {
 		let report;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		if (client) {
 			report = await Order.aggregate([
 				{
 					$match: {
 						state: true,
 						client: new ObjectId(client),
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gte: new Date(new Date().setDate(new Date().getDate() - 30)),
 						},
@@ -1297,6 +1344,7 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
+						superUser: tokenData.UserInfo.superUser,
 						deliveryDate: {
 							$gte: new Date(new Date().setDate(new Date().getDate() - 30)),
 						},
@@ -1391,10 +1439,14 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 // clientes, total, por mes
 const reportNewClientByMonth = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Client.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -1454,10 +1506,14 @@ const reportNewClientByMonth = async (req, res = response) => {
 const reportPaymentByRangeDay = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1538,10 +1594,14 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 const reportTotalSellByRangeDay = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1621,6 +1681,7 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1715,10 +1776,14 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 // stock
 const reportTotalStock = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Product.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -1791,12 +1856,16 @@ const reportTotalStock = async (req, res = response) => {
 // clients
 const reportTotalClientDebt = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					paid: false,
 					status: 'Entregado',
+					superUser: tokenData.UserInfo.superUser,
 				},
 			},
 			{
@@ -1875,11 +1944,15 @@ const reportTotalClientDebt = async (req, res = response) => {
 const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					status: 'Entregado',
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1991,11 +2064,15 @@ const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 };
 const reportTotalClientBuyAll = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					status: 'Entregado',
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -2125,12 +2202,16 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 const reportTotalClientBuyIndividual = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					client: new ObjectId(id),
 					status: 'Entregado',
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -2240,12 +2321,16 @@ const reportTotalClientBuyIndividual = async (req, res = response) => {
 const reportTotalClientBuyIndividualByDay = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					client: new ObjectId(id),
 					status: 'Entregado',
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},

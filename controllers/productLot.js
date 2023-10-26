@@ -1,10 +1,13 @@
 const { response } = require('express');
 const { ProductLot } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getProductLots = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+		const { limit = 1000000, from = 0 } = req.query;
+		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
 		const [total, productLots] = await Promise.all([
 			ProductLot.countDocuments(query),
@@ -61,10 +64,13 @@ const getProductLot = async (req, res = response) => {
 const postProductLot = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const productLot = new ProductLot(data);

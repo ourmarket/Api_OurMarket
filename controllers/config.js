@@ -1,9 +1,16 @@
 const { response } = require('express');
 const { Config, Order, Client } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getConfig = async (req, res = response) => {
 	try {
-		const config = await Config.find({ state: true });
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const config = await Config.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
 
 		return res.status(200).json({
 			ok: true,

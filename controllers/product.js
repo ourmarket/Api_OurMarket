@@ -1,10 +1,14 @@
 /* eslint-disable eqeqeq */
 const { response } = require('express');
 const { Product, Ofert } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getProducts = async (req, res = response) => {
+	const jwt = req.cookies.jwt;
+	const tokenData = getTokenData(jwt);
+
 	const { limit = 1000, from = 0 } = req.query;
-	const query = { state: true };
+	const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
 	const [total, products] = await Promise.all([
 		Product.countDocuments(query),
@@ -12,22 +16,15 @@ const getProducts = async (req, res = response) => {
 			.populate('user', 'name')
 			.populate('category', 'name')
 			.skip(Number(from))
-			.limit(Number(limit)),
+			.limit(Number(limit))
+			.sort({ createdAt: -1 }),
 	]);
 
-	const orderProducts = products.sort(function (a, b) {
-		if (a.name.toLowerCase() < b.name.toLowerCase()) {
-			return -1;
-		}
-		if (a.name.toLowerCase() > b.name.toLowerCase()) {
-			return 1;
-		}
-		return 0;
-	});
-
-	res.json({
+	return res.status(200).json({
+		ok: true,
+		status: 200,
 		total,
-		products: orderProducts,
+		products,
 	});
 };
 
@@ -42,11 +39,14 @@ const getProduct = async (req, res = response) => {
 
 const postProduct = async (req, res = response) => {
 	const { state, ...body } = req.body;
+	const jwt = req.cookies.jwt;
+	const tokenData = getTokenData(jwt);
 
 	// Generar la data a guardar
 	const data = {
 		...body,
 		user: req.user,
+		superUser: tokenData.UserInfo.superUser,
 	};
 
 	const product = new Product(data);
@@ -385,19 +385,22 @@ const updateProductStock = async (req, res = response) => {
 const getOfertByProductId = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const ofert = await Ofert.findOne({ product: id, state: true }).populate(
-			'product',
-			[
-				'name',
-				'description',
-				'unit',
-				'img',
-				'brand',
-				'category',
-				'type',
-				'stock',
-			]
-		);
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+		const ofert = await Ofert.findOne({
+			product: id,
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		}).populate('product', [
+			'name',
+			'description',
+			'unit',
+			'img',
+			'brand',
+			'category',
+			'type',
+			'stock',
+		]);
 
 		res.status(200).json({
 			ok: true,

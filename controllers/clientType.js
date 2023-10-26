@@ -1,6 +1,9 @@
 const { response } = require('express');
 const { ClientType } = require('../models');
 
+/* 
+Estos controladores son generales para todos los clientes
+*/
 const getClientTypes = async (req, res = response) => {
 	try {
 		const { limit = 1000, from = 0 } = req.query;

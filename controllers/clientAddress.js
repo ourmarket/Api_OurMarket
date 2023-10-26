@@ -59,10 +59,13 @@ const getClientAddress = async (req, res = response) => {
 const postClientAddress = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const clientAddress = new ClientAddress(data);

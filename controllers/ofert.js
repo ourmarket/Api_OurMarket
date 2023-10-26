@@ -1,44 +1,34 @@
 const { response } = require('express');
 const { Ofert } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getOferts = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, oferts] = await Promise.all([
-			Ofert.countDocuments(query),
-			Ofert.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('product', [
-					'name',
-					'description',
-					'unit',
-					'img',
-					'brand',
-					'category',
-					'type',
-					'stock',
-				]),
-		]);
-
-		const sortOferts = oferts.sort(function (a, b) {
-			if (a.description < b.description) {
-				return -1;
-			}
-			if (a.description > b.description) {
-				return 1;
-			}
-			return 0;
-		});
+		const oferts = await Ofert.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		})
+			.populate('product', [
+				'name',
+				'description',
+				'unit',
+				'img',
+				'brand',
+				'category',
+				'type',
+				'stock',
+			])
+			.sort({ createdAt: -1 });
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: oferts.length,
 			data: {
-				oferts: sortOferts,
+				oferts,
 			},
 		});
 	} catch (error) {
@@ -115,10 +105,13 @@ const getOfertByProductId = async (req, res = response) => {
 const postOfert = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const ofert = new Ofert(data);

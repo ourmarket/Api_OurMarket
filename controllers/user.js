@@ -5,6 +5,10 @@ const { User } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail } = require('../config/nodemailer');
 const { getEmailTemplate } = require('../template/emailTemplate');
+/* 
+superUser en la creación de un nuevo usuario debe enviarse a traves del cliente, 
+dentro de los datos enviados via POST.
+*/
 
 const getUsers = async (req = request, res = response) => {
 	try {
