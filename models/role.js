@@ -6,6 +6,7 @@ const RoleSchema = Schema(
 			type: String,
 			required: [true, 'El rol es obligatorio'],
 		},
+		type: { type: String }, // [client, employee]
 	},
 	{ timestamps: true }
 );

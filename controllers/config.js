@@ -11,6 +11,13 @@ const getConfig = async (req, res = response) => {
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
 		});
+		if (config.length === 0) {
+			return res.status(400).json({
+				ok: false,
+				status: 400,
+				msg: `No existe configuración para este usuario`,
+			});
+		}
 
 		return res.status(200).json({
 			ok: true,
@@ -26,6 +33,52 @@ const getConfig = async (req, res = response) => {
 	}
 };
 
+const postConfig = async (req, res = response) => {
+	try {
+		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const existConfig = await Config.findOne({
+			superUser: tokenData.UserInfo.superUser,
+			state: true,
+		});
+
+		if (existConfig) {
+			return res.status(400).json({
+				ok: false,
+				status: 400,
+				msg: `Ya existe una configuración para este usuario`,
+			});
+		}
+
+		// Generar la data a guardar
+		const data = {
+			...body,
+			superUser: tokenData.UserInfo.superUser,
+		};
+
+		const newConfig = new Config(data);
+
+		// Guardar DB
+		await newConfig.save();
+
+		res.status(200).json({
+			ok: true,
+			status: 200,
+			data: {
+				config: newConfig,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+
 const putConfig = async (req, res = response) => {
 	try {
 		const { inactiveDays } = req.body;
@@ -34,8 +87,11 @@ const putConfig = async (req, res = response) => {
 			inactiveDays,
 		};
 
-		const editConfig = await Config.findByIdAndUpdate(
-			'650094ef155817eb4ab49020',
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const editConfig = await Config.findOneAndUpdate(
+			{ superUser: tokenData.UserInfo.superUser },
 			data,
 			{ new: true }
 		);
@@ -55,11 +111,17 @@ const putConfig = async (req, res = response) => {
 };
 const setConfigActiveClient = async (req, res = response) => {
 	try {
-		const config = await Config.findById('650094ef155817eb4ab49020');
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const config = await Config.find({
+			superUser: tokenData.UserInfo.superUser,
+		});
 		const lastOrders = await Order.aggregate([
 			{
 				$match: {
 					state: true,
+					superUser: tokenData.UserInfo.superUser,
 					deliveryDate: {
 						$gte: new Date(
 							new Date().setDate(new Date().getDate() - config.inactiveDays)
@@ -75,7 +137,10 @@ const setConfigActiveClient = async (req, res = response) => {
 			},
 		]);
 
-		await Client.updateMany({}, { $set: { active: false } });
+		await Client.updateMany(
+			{ superUser: tokenData.UserInfo.superUser },
+			{ $set: { active: false } }
+		);
 
 		lastOrders.forEach(async (order) => {
 			await Client.findByIdAndUpdate(order.client, { active: true });
@@ -96,6 +161,7 @@ const setConfigActiveClient = async (req, res = response) => {
 
 module.exports = {
 	getConfig,
+	postConfig,
 	putConfig,
 	setConfigActiveClient,
 };

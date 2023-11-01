@@ -198,6 +198,7 @@ const postOrder = async (req, res = response) => {
 				points: Math.trunc(subTotal),
 				action: 'buy',
 				orderId: order._id,
+				superUser: tokenData.UserInfo.superUser,
 			};
 
 			const points = new Points(dataPoints);

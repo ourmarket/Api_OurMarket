@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 const EmployeeSchema = Schema(
 	{
 		userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-		docket: { type: String, unique: true }, // legajo
+		docket: { type: String }, // legajo
 		name: { type: String },
 		lastName: { type: String },
 		cuil: { type: Number },

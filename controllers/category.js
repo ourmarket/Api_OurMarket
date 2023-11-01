@@ -52,7 +52,11 @@ const postCategory = async (req, res = response) => {
 		const jwt = req.cookies.jwt;
 		const tokenData = getTokenData(jwt);
 
-		const categoryDB = await Category.findOne({ name });
+		const categoryDB = await Category.findOne({
+			name,
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
 
 		if (categoryDB) {
 			return res.status(400).json({

@@ -20,7 +20,7 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -109,7 +109,7 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -209,7 +209,7 @@ const reportTotalOrdersByDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -300,7 +300,7 @@ const reportTotalOrders = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -356,7 +356,7 @@ const reportTotalOrders21_03 = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -451,7 +451,7 @@ const reportTotalOrdersProducts = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -544,7 +544,7 @@ const reportTotalOrdersProductsByDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -648,7 +648,7 @@ const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -726,7 +726,7 @@ const reportTotalOrdersProductsByRange = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -807,7 +807,7 @@ const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -906,7 +906,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -985,7 +985,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1072,7 +1072,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1150,7 +1150,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 						},
@@ -1265,7 +1265,7 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 					$match: {
 						state: true,
 						client: new ObjectId(client),
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gte: new Date(new Date().setDate(new Date().getDate() - 30)),
 						},
@@ -1344,7 +1344,7 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: tokenData.UserInfo.superUser,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
 						deliveryDate: {
 							$gte: new Date(new Date().setDate(new Date().getDate() - 30)),
 						},
@@ -1446,7 +1446,7 @@ const reportNewClientByMonth = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -1513,7 +1513,7 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1601,7 +1601,7 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1681,7 +1681,7 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -1783,7 +1783,7 @@ const reportTotalStock = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -1865,7 +1865,7 @@ const reportTotalClientDebt = async (req, res = response) => {
 					state: true,
 					paid: false,
 					status: 'Entregado',
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},
 			{
@@ -1897,6 +1897,9 @@ const reportTotalClientDebt = async (req, res = response) => {
 					totalTransfer: {
 						$sum: '$payment.transfer',
 					},
+					totalUnpaidOrders: {
+						$sum: 1,
+					},
 				},
 			},
 			{
@@ -1905,6 +1908,7 @@ const reportTotalClientDebt = async (req, res = response) => {
 					totalDebt: 1,
 					totalCash: 1,
 					totalTransfer: 1,
+					totalUnpaidOrders: 1,
 					name: '$_id.name',
 					lastName: '$_id.lastName',
 					clientId: '$_id.id',
@@ -1952,7 +1956,7 @@ const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 				$match: {
 					state: true,
 					status: 'Entregado',
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),
@@ -2072,7 +2076,7 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 				$match: {
 					state: true,
 					status: 'Entregado',
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -2160,6 +2164,9 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 					totalProfits: {
 						$sum: '$totalProfits',
 					},
+					ordersCount: {
+						$sum: 1, // Contar órdenes por cliente
+					},
 				},
 			},
 			{
@@ -2174,6 +2181,7 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 					clientId: '$_id.clientId',
 					totalProfits: 1,
 					active: '$_id.active',
+					ordersCount: 1, // Incluir la cantidad de órdenes por cliente
 				},
 			},
 			{
@@ -2211,7 +2219,7 @@ const reportTotalClientBuyIndividual = async (req, res = response) => {
 					state: true,
 					client: new ObjectId(id),
 					status: 'Entregado',
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},
@@ -2330,7 +2338,7 @@ const reportTotalClientBuyIndividualByDay = async (req, res = response) => {
 					state: true,
 					client: new ObjectId(id),
 					status: 'Entregado',
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
 					},

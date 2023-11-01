@@ -18,7 +18,7 @@ const getUsers = async (req = request, res = response) => {
 		const users = await User.find({
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
-		}).populate('role', 'role');
+		}).populate('role', ['role', 'type', 'es']);
 
 		res.status(200).json({
 			ok: true,

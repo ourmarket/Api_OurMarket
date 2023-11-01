@@ -3,6 +3,7 @@ const {
 	getConfig,
 	putConfig,
 	setConfigActiveClient,
+	postConfig,
 } = require('../controllers/config');
 const { putConfigValidation } = require('../validations/config-validator');
 const router = Router();
@@ -12,6 +13,7 @@ const router = Router();
  */
 
 router.get('/', getConfig);
+router.post('/', putConfigValidation, postConfig);
 router.put('/', putConfigValidation, putConfig);
 
 // aplica la config de clientes activos e inactivos

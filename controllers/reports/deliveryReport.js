@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { Order } = require('../../models');
+const { getTokenData } = require('../../helpers');
 const { ObjectId } = require('mongoose').Types;
 
 // ordenes
@@ -7,12 +8,15 @@ const deliveryOrders = async (req, res = response) => {
 	try {
 		const { id } = req.params;
 		const { from, to } = req.body; // "Tue, 21 Mar 2023 00:00:00 GMT"
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
 					deliveryTruck: new ObjectId(id),
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gt: new Date(from),
 						$lt: new Date(to),

@@ -5,6 +5,7 @@ const {
 	putDeliveryZone,
 	deleteDeliveryZone,
 	postDeliveryZone,
+	putDeleteMapZone,
 } = require('../controllers/deliveryZone');
 const {
 	getDeliveryZoneValidator,
@@ -27,6 +28,9 @@ router.get('/:id', getDeliveryZoneValidator, getDeliveryZone);
 
 // Crear zona - privado - cualquier persona con un token válido
 router.post('/', postDeliveryZoneValidator, postDeliveryZone);
+
+// Actualizar - borrar mapZone
+router.put('/deleteMapZone/:id', putDeliveryZoneValidator, putDeleteMapZone);
 
 // Actualizar - privado - cualquiera con token válido
 router.put('/:id', putDeliveryZoneValidator, putDeliveryZone);

@@ -20,6 +20,7 @@ const allowedOrigins = [
 	'http://localhost:5174',
 	'https://our-market-dashsboard-full.netlify.app',
 	'https://our-market-tpv.netlify.app',
+	'https://g2gkd296-5173.brs.devtunnels.ms',
 ];
 
 module.exports = allowedOrigins;
