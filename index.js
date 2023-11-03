@@ -14,7 +14,7 @@ const cron = require('node-cron');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
-const ordersSocket = require('./sockets/deliverySocket');
+const Sockets = require('./sockets/sockets');
 const io = require('socket.io')(server, {
 	cors: { origin: '*' },
 });
@@ -64,7 +64,7 @@ app.use(function (req, res, next) {
 });
 
 // --------------Socket-------------
-ordersSocket(io);
+Sockets(io);
 
 // -------------routes-----------
 app.use('/api/auth', require('./routes/auth'));

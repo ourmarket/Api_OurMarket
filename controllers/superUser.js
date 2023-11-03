@@ -68,7 +68,7 @@ const getSuperUser = async (req, res = response) => {
 
 const postSuperUser = async (req, res = response) => {
 	try {
-		const { superUser } = req.body;
+		const { superUser, ...body } = req.body;
 
 		const superUserDB = await SuperUser.findOne({ superUser });
 
@@ -80,7 +80,7 @@ const postSuperUser = async (req, res = response) => {
 
 		// Generar la data a guardar
 		const data = {
-			superUser,
+			...body,
 		};
 
 		const newSuperUser = new SuperUser(data);

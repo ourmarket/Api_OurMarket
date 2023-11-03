@@ -19,9 +19,8 @@ module.exports = (io) => {
 		socket.on('position', (data) => {
 			const superUser = tokenData.UserInfo.superUser;
 
-			console.log(superUser === data.superUser);
 			if (data?.truckId && data.superUser === superUser) {
-				console.log('CLIENTE EMITIO: ', data);
+				console.log('CLIENTE EMITIÓ: ', data);
 				deliveryPosition.emit('delivery', data);
 			}
 		});
@@ -32,12 +31,24 @@ module.exports = (io) => {
 	});
 
 	ordersCashier.on('connection', (socket) => {
-		console.log('Una conexión a socket.io => /orders/cashier');
+		const tokenData = getTokenData(socket.handshake.query['x-token']);
+
+		if (!tokenData?.UserInfo.superUser) {
+			console.log('Socket no identificado');
+			return socket.disconnect();
+		}
+
+		console.log(
+			`Una conexión de superUser: ${tokenData.UserInfo.superUserData.name} ${tokenData.UserInfo.superUserData.lastName} a socket.io => /orders/cashier`
+		);
 
 		socket.on('order', async (data) => {
-			console.log('CLIENTE EMITIO: ', data);
+			const superUser = tokenData.UserInfo.superUser;
 
-			ordersCashier.emit('orderData', data);
+			if (data.superUser === superUser) {
+				console.log('CLIENTE EMITIÓ: ', data);
+				ordersCashier.emit('orderData', data);
+			}
 		});
 
 		socket.on('disconnect', (data) => {

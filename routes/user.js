@@ -15,12 +15,15 @@ const {
 	putUserValidations,
 	deleteUserValidations,
 	getUsersValidations,
+	postNewAdminValidations,
 } = require('../validations/user-validator');
 
 const router = Router();
 
 // publico
 router.post('/', postUserValidations, postUser);
+// solo para crear el primer administrador de cada dashboard, no pide token
+router.post('/admin', postNewAdminValidations, postUser);
 // privado
 router.get('/', getUsers);
 router.get('/:id', getUserValidations, getUser);

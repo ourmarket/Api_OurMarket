@@ -56,6 +56,20 @@ const postUserValidations = [
 	check('role').custom(existRoleById),
 	validateFields,
 ];
+const postNewAdminValidations = [
+	check('name', 'El nombre es obligatorio').not().isEmpty(),
+	check('lastName', 'El nombre es obligatorio').not().isEmpty(),
+	check('password', 'El password debe de ser más de 6 letras').isLength({
+		min: 6,
+	}),
+	check('email').not().isEmpty(),
+	check('phone', 'El teléfono es obligatorio').not().isEmpty(),
+	check('phone', 'Solo números').isNumeric(),
+	check('phone').not().isEmpty(),
+	check('role', 'No es un ID válido').isMongoId(),
+	check('role').custom(existRoleById),
+	validateFields,
+];
 
 const putUserValidations = [
 	validarJWT,
@@ -87,4 +101,5 @@ module.exports = {
 	deleteUserValidations,
 	getUsersValidations,
 	patchUserValidations,
+	postNewAdminValidations,
 };
