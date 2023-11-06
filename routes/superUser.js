@@ -5,7 +5,6 @@ const {
 	postSuperUser,
 	putSuperUser,
 	deleteSuperUser,
-	update,
 } = require('../controllers/superUser');
 
 const router = Router();
@@ -16,7 +15,7 @@ const router = Router();
 
 //  Obtener todas las categorías - publico
 router.get('/', getSuperUsers);
-router.get('/update', update);
+// router.get('/update', update);
 
 // Obtener una categoría por id - publico
 router.get('/:id', getSuperUser);

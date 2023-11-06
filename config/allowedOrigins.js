@@ -1,10 +1,5 @@
 const allowedOrigins = [
-	'https://tpv-ourmarket.netlify.app',
 	'https://dashboard-ourmarket.netlify.app',
-	'https://dr-dashboard.netlify.app',
-	'https://www.distribuidora-ringo.com.ar',
-	'https://dr-distribution-app.netlify.app',
-	'https://dr-tpv.netlify.app',
 	'http://127.0.0.1:5500',
 	'http://localhost:3500',
 	'http://localhost:3010',
@@ -18,11 +13,6 @@ const allowedOrigins = [
 	'http://192.168.100.5:3015',
 	'http://localhost:5173',
 	'http://localhost:5174',
-	'https://our-market-dashsboard-full.netlify.app',
-	'https://our-market-tpv.netlify.app',
-	'https://ourmarket-dashboard.netlify.app',
-	'https://delivery-ourmarket.netlify.app',
-	'https://dashboard-ourmarket.netlify.app',
 ];
 
 module.exports = allowedOrigins;

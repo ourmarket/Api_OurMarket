@@ -151,79 +151,79 @@ const update = async (req, res = response) => {
 	try {
 		await User.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Client.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Category.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await ClientAddress.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Config.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await DeliverySubZone.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await DeliveryTruck.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await DeliveryZone.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Distributor.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Employee.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Expenses.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Ofert.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Order.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Points.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Product.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await ProductLot.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Recommendation.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Salary.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 		await Supplier.updateMany(
 			{},
-			{ $set: { superUser: '6539364fe8b1b5c4d4cabd93' } }
+			{ $set: { superUser: '654974527ae94fa111479ad5' } }
 		);
 
 		return res.status(200).json({
