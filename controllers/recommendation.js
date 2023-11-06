@@ -1,11 +1,14 @@
 const { Recommendation, Points } = require('../models');
 const { response } = require('express');
 const { ObjectId } = require('mongodb');
+const { getTokenData } = require('../helpers');
 
 const getAllRecommendation = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+		const { limit = 1000000, from = 0 } = req.query;
+		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
 		const [total, recommendation] = await Promise.all([
 			Recommendation.countDocuments(query),

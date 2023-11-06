@@ -16,6 +16,11 @@ const ClientAddressSchema = Schema(
 		deliveryZone: { type: Schema.Types.ObjectId, ref: 'DeliveryZone' },
 		lat: { type: Number },
 		lng: { type: Number },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

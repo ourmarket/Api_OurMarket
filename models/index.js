@@ -3,9 +3,8 @@ const Product = require('./product');
 const Role = require('./role');
 const Server = require('./server');
 const User = require('./user');
-const Repartidor = require('./repartidor');
+
 const Order = require('./order');
-const Brand = require('./brand');
 const Supplier = require('./supplier');
 const ProductLot = require('./productLot');
 const Ofert = require('./ofert');
@@ -25,6 +24,7 @@ const Recommendation = require('./recommendation');
 const OrderActive = require('./orderActive');
 const Config = require('./config');
 const Expenses = require('./expenses');
+const SuperUser = require('./superUser');
 
 module.exports = {
 	Category,
@@ -33,8 +33,6 @@ module.exports = {
 	Server,
 	User,
 	Order,
-	Repartidor,
-	Brand,
 	Supplier,
 	ProductLot,
 	Ofert,
@@ -54,4 +52,5 @@ module.exports = {
 	OrderActive,
 	Config,
 	Expenses,
+	SuperUser,
 };

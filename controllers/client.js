@@ -9,26 +9,25 @@ const {
 	User,
 } = require('../models');
 const bcryptjs = require('bcryptjs');
+const { getTokenData } = require('../helpers');
 
 const getClients = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, clients] = await Promise.all([
-			Client.countDocuments(query),
-			Client.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('clientCategory', ['clientCategory'])
-				.populate('user', ['name', 'lastName', 'phone', 'email'])
-				.populate('clientType', ['clientType']),
-		]);
+		const clients = await Client.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		})
+			.populate('clientCategory', ['clientCategory'])
+			.populate('user', ['name', 'lastName', 'phone', 'email'])
+			.populate('clientType', ['clientType']);
 
-		res.status(200).json({
+		return res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: clients.length,
 			data: {
 				clients,
 			},
@@ -79,6 +78,8 @@ const getClient = async (req, res = response) => {
 const postClient = async (req, res = response) => {
 	try {
 		const { state, recommendation, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const clientDB = await Client.findOne({ cuit: body.cuit });
 
@@ -91,6 +92,7 @@ const postClient = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const client = new Client(data);
@@ -225,7 +227,13 @@ const postSimpleClient = async (req, res = response) => {
 			address,
 		} = req.body;
 
-		const existPhone = await User.findOne({ phone });
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const existPhone = await User.findOne({
+			phone,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existPhone && existPhone[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -233,7 +241,10 @@ const postSimpleClient = async (req, res = response) => {
 				msg: `El teléfono ${phone} ya esta registrado`,
 			});
 		}
-		const existEmail = await User.findOne({ email });
+		const existEmail = await User.findOne({
+			email,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existEmail && existEmail[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -254,6 +265,7 @@ const postSimpleClient = async (req, res = response) => {
 			phone,
 			email: email || '',
 			verified: true,
+			superUser: tokenData.UserInfo.superUser,
 		});
 
 		// Guardar en BD
@@ -266,6 +278,7 @@ const postSimpleClient = async (req, res = response) => {
 			clientType,
 			cuit,
 			active: true,
+			superUser: tokenData.UserInfo.superUser,
 		});
 
 		if (recommendation) {
@@ -299,6 +312,7 @@ const postSimpleClient = async (req, res = response) => {
 				lng: address?.lng || null,
 				client: client._id,
 				user: user._id,
+				superUser: tokenData.UserInfo.superUser,
 			});
 
 			await addressNew.save();

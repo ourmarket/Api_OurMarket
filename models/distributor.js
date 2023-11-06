@@ -4,7 +4,7 @@ const DistributorSchema = Schema(
 	{
 		businessName: { type: String },
 		cuit: { type: Number },
-		email: { type: String, unique: true },
+		email: { type: String },
 		phone: { type: String },
 		maximum: { type: Number }, // tope
 		address: { type: String },
@@ -12,6 +12,11 @@ const DistributorSchema = Schema(
 		city: { type: String },
 		zip: { type: Number },
 		state: { type: Boolean, default: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

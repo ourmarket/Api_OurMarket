@@ -6,6 +6,12 @@ const SalarySchema = Schema({
 	typeOfCalculation: { type: String },
 	typeOfContract: { type: String },
 	state: { type: Boolean, default: true, required: true },
+
+	superUser: {
+		type: Schema.Types.ObjectId,
+		ref: 'SuperUser',
+		required: true,
+	},
 });
 
 SalarySchema.methods.toJSON = function () {

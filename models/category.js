@@ -5,7 +5,6 @@ const CategorySchema = Schema(
 		name: {
 			type: String,
 			required: true,
-			unique: true,
 		},
 		img: {
 			type: String,
@@ -18,6 +17,11 @@ const CategorySchema = Schema(
 		user: {
 			type: Schema.Types.ObjectId,
 			ref: 'User',
+			required: true,
+		},
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
 			required: true,
 		},
 	},

@@ -1,10 +1,13 @@
 const { response } = require('express');
 const { Order, Points, Client } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getOrders = async (req, res = response) => {
 	try {
 		const { limit = 10000000, from = 0, active, delivery = '' } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
 		const [total, orders] = await Promise.all([
 			Order.countDocuments(query),
@@ -22,6 +25,7 @@ const getOrders = async (req, res = response) => {
 				active: true,
 				deliveryTruck: delivery,
 				state: true,
+				superUser: tokenData.UserInfo.superUser,
 			})
 				.populate('deliveryTruck')
 				.populate('employee')
@@ -56,11 +60,17 @@ const getOrders = async (req, res = response) => {
 
 const getOrdersPaginate = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 		const { limit = 10000, page = 1, active = 'false', paid } = req.query;
 		// active = "false"  => all
 
 		if (active === 'true') {
-			const query = { state: true, active: true };
+			const query = {
+				state: true,
+				active: true,
+				superUser: tokenData.UserInfo.superUser,
+			};
 
 			const [total, orders] = await Promise.all([
 				Order.countDocuments(query),
@@ -83,7 +93,11 @@ const getOrdersPaginate = async (req, res = response) => {
 			});
 		}
 		if (paid === 'false') {
-			const query = { state: true, paid: false };
+			const query = {
+				state: true,
+				paid: false,
+				superUser: tokenData.UserInfo.superUser,
+			};
 
 			const [total, orders] = await Promise.all([
 				Order.countDocuments(query),
@@ -106,7 +120,7 @@ const getOrdersPaginate = async (req, res = response) => {
 			});
 		}
 
-		const query = { state: true };
+		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
 		const [total, orders] = await Promise.all([
 			Order.countDocuments(query),
@@ -164,12 +178,15 @@ const getOrder = async (req, res = response) => {
 const postOrder = async (req, res = response) => {
 	try {
 		const { state, paid, subTotal, client, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const data = {
+			...body,
 			paid,
 			subTotal,
 			client,
-			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const order = new Order(data);
@@ -181,6 +198,7 @@ const postOrder = async (req, res = response) => {
 				points: Math.trunc(subTotal),
 				action: 'buy',
 				orderId: order._id,
+				superUser: tokenData.UserInfo.superUser,
 			};
 
 			const points = new Points(dataPoints);
@@ -360,6 +378,8 @@ const getClientOrder = async (req, res = response) => {
 
 const getOrdersToday = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 		const today = new Date();
 
 		const from = new Date(
@@ -379,6 +399,7 @@ const getOrdersToday = async (req, res = response) => {
 
 		const query = {
 			state: true,
+			superUser: tokenData.UserInfo.superUser,
 			$and: [{ deliveryDate: { $gte: from } }, { deliveryDate: { $lte: to } }],
 		};
 
@@ -412,8 +433,11 @@ const getOrdersToday = async (req, res = response) => {
 const getOrdersByDay = async (req, res = response) => {
 	try {
 		const { days } = req.params;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 		const orders = await Order.find({
 			state: true,
+			superUser: tokenData.UserInfo.superUser,
 			deliveryDate: {
 				$lt: new Date(),
 				$gte: new Date(new Date().setDate(new Date().getDate() - +days)),
@@ -447,7 +471,13 @@ const getOrdersByDay = async (req, res = response) => {
 const getOrdersActives = async (req, res = response) => {
 	try {
 		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true, active: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+		const query = {
+			state: true,
+			active: true,
+			superUser: tokenData.UserInfo.superUser,
+		};
 
 		const [total, orders] = await Promise.all([
 			Order.countDocuments(query),
@@ -479,11 +509,15 @@ const getOrdersActives = async (req, res = response) => {
 const getClientOrderDebt = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const orders = await Order.find({
 			state: true,
 			client: id,
 			paid: false,
 			status: 'Entregado',
+			superUser: tokenData.UserInfo.superUser,
 		});
 
 		res.status(200).json({
@@ -505,9 +539,13 @@ const getClientOrderDebt = async (req, res = response) => {
 
 const getOrdersCashier = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const orders = await Order.find({
 			state: true,
 			cashierMode: true,
+			superUser: tokenData.UserInfo.superUser,
 		})
 			.populate('userId')
 			.populate('client');
@@ -530,8 +568,11 @@ const getOrdersCashier = async (req, res = response) => {
 
 const putOrderSetInactiveAll = async (req, res = response) => {
 	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		await Order.updateMany(
-			{ state: true, active: true },
+			{ state: true, active: true, superUser: tokenData.UserInfo.superUser },
 			{ $set: { active: false } }
 		);
 

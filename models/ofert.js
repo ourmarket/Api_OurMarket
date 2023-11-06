@@ -26,6 +26,11 @@ const OfertSchema = Schema(
 				quantity4: { type: Number },
 			},
 		],
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

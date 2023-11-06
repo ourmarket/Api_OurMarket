@@ -15,7 +15,9 @@ const loginCashierSeller = async (req, res) => {
 
 		// Verificar si el email existe
 		let role;
-		const foundUser = await User.findOne({ email }).exec();
+		const foundUser = await User.findOne({ email })
+			.populate('superUser')
+			.exec();
 
 		if (foundUser) {
 			role = await Role.findById(foundUser.role);
@@ -51,6 +53,8 @@ const loginCashierSeller = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
 					},
 				},
 				process.env.JWT_SECRET,
@@ -61,6 +65,8 @@ const loginCashierSeller = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
 					},
 				},
 				process.env.JWT_REFRESH,
@@ -116,6 +122,8 @@ const loginCashierSeller = async (req, res) => {
 					lastName: foundUser.lastName,
 					email: foundUser.email,
 					phone: foundUser.phone,
+					superUser: foundUser.superUser._id,
+					version: foundUser.superUser.version,
 				},
 			});
 		} else {
@@ -145,7 +153,7 @@ const loginUser = async (req, res = response) => {
 	// Verificar si el email existe
 	let role;
 	let client;
-	const foundUser = await User.findOne({ email }).exec();
+	const foundUser = await User.findOne({ email }).populate('superUser').exec();
 
 	if (foundUser) {
 		role = await Role.findById(foundUser.role);
@@ -185,13 +193,22 @@ const loginUser = async (req, res = response) => {
 				UserInfo: {
 					id: foundUser._id,
 					role: role.role,
+					superUser: foundUser.superUser._id,
+					version: foundUser.superUser.version,
 				},
 			},
 			process.env.JWT_SECRET,
 			{ expiresIn: '15m' }
 		);
 		const newRefreshToken = jwt.sign(
-			{ id: foundUser._id },
+			{
+				UserInfo: {
+					id: foundUser._id,
+					role: role.role,
+					superUser: foundUser.superUser._id,
+					version: foundUser.superUser.version,
+				},
+			},
 			process.env.JWT_REFRESH,
 			{ expiresIn: '1d' }
 		);
@@ -239,6 +256,8 @@ const loginUser = async (req, res = response) => {
 			accessToken,
 			id: foundUser._id,
 			clientType: client.clientType.clientType,
+			superUser: foundUser.superUser._id,
+			version: foundUser.superUser.version,
 		});
 	} else {
 		return res.status(401).json({
@@ -258,7 +277,9 @@ const loginDeliveryTruck = async (req, res) => {
 
 		// Verificar si el email existe
 		let role;
-		const foundUser = await User.findOne({ email }).exec();
+		const foundUser = await User.findOne({ email })
+			.populate('superUser')
+			.exec();
 
 		if (foundUser) {
 			role = await Role.findById(foundUser.role);
@@ -294,6 +315,9 @@ const loginDeliveryTruck = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_SECRET,
@@ -304,6 +328,9 @@ const loginDeliveryTruck = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_REFRESH,
@@ -363,6 +390,9 @@ const loginDeliveryTruck = async (req, res) => {
 				accessToken,
 				id: foundUser._id,
 				deliveryTruck: deliveryTruck[0],
+				superUser: foundUser.superUser._id,
+				version: foundUser.superUser.version,
+				superUserData: foundUser.superUser.superUserData,
 			});
 		} else {
 			return res.status(401).json({
@@ -522,7 +552,7 @@ const loginAdmin = async (req, res) => {
 
 	// Verificar si el email existe
 	let role;
-	const foundUser = await User.findOne({ email }).exec();
+	const foundUser = await User.findOne({ email }).populate('superUser').exec();
 
 	if (foundUser) {
 		role = await Role.findById(foundUser.role);
@@ -558,6 +588,9 @@ const loginAdmin = async (req, res) => {
 				UserInfo: {
 					id: foundUser._id,
 					role: role.role,
+					superUser: foundUser.superUser._id,
+					version: foundUser.superUser.version,
+					superUserData: foundUser.superUser.superUserData,
 				},
 			},
 			process.env.JWT_SECRET,
@@ -568,6 +601,9 @@ const loginAdmin = async (req, res) => {
 				UserInfo: {
 					id: foundUser._id,
 					role: role.role,
+					superUser: foundUser.superUser._id,
+					version: foundUser.superUser.version,
+					superUserData: foundUser.superUser.superUserData,
 				},
 			},
 			process.env.JWT_REFRESH,
@@ -616,6 +652,9 @@ const loginAdmin = async (req, res) => {
 		return res.status(200).json({
 			accessToken,
 			id: foundUser._id,
+			superUser: foundUser.superUser._id,
+			version: foundUser.superUser.version,
+			superUserData: foundUser.superUser.superUserData,
 		});
 	} else {
 		return res.status(401).json({
@@ -642,7 +681,9 @@ const refresh = async (req, res) => {
 
 		res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true });
 
-		const foundUser = await User.findOne({ refreshToken }).exec();
+		const foundUser = await User.findOne({ refreshToken })
+			.populate('superUser')
+			.exec();
 
 		// Se detecta reutilización de RT
 		if (!foundUser) {
@@ -694,6 +735,9 @@ const refresh = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_SECRET,
@@ -705,6 +749,9 @@ const refresh = async (req, res) => {
 					UserInfo: {
 						id: foundUser._id,
 						role: role.role,
+						superUser: foundUser.superUser._id,
+						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_REFRESH,
@@ -730,7 +777,10 @@ const refresh = async (req, res) => {
 			return res.status(200).json({
 				accessToken,
 				id: foundUser._id,
+				superUser: foundUser.superUser._id,
+				version: foundUser.superUser.version,
 				clientType: client?.clientType?.clientType,
+				superUserData: foundUser.superUser.superUserData,
 			});
 		});
 	} catch (error) {

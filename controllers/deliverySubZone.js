@@ -1,35 +1,25 @@
 const { response } = require('express');
 const { DeliverySubZone } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getDeliverySubZones = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, deliverySubZones] = await Promise.all([
-			DeliverySubZone.countDocuments(query),
-			DeliverySubZone.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('deliveryZone', ['name']),
-		]);
-
-		const order = deliverySubZones.sort(function (a, b) {
-			if (a.deliveryZone.name < b.deliveryZone.name) {
-				return -1;
-			}
-			if (a.deliveryZone.name > b.deliveryZone.name) {
-				return 1;
-			}
-			return 0;
-		});
+		const deliverySubZones = await DeliverySubZone.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		})
+			.populate('deliveryZone', ['name'])
+			.sort({ name: -1 });
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: deliverySubZones.length,
 			data: {
-				deliverySubZones: order,
+				deliverySubZones,
 			},
 		});
 	} catch (error) {
@@ -68,6 +58,8 @@ const getDeliverySubZone = async (req, res = response) => {
 const postDeliverySubZone = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		const deliverySubZoneDB = await DeliverySubZone.findOne({
 			name: body.name,
@@ -82,6 +74,7 @@ const postDeliverySubZone = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const deliverySubZone = new DeliverySubZone(data);

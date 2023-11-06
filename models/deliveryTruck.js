@@ -15,6 +15,11 @@ const DeliveryTruckSchema = Schema({
 	maximumLoad: { type: Number },
 	coldChamber: { type: Boolean },
 	state: { type: Boolean, default: true, required: true },
+	superUser: {
+		type: Schema.Types.ObjectId,
+		ref: 'SuperUser',
+		required: true,
+	},
 });
 
 DeliveryTruckSchema.methods.toJSON = function () {

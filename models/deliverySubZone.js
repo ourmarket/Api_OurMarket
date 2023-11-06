@@ -25,6 +25,11 @@ const DeliverySubZoneSchema = Schema(
 			},
 		],
 		state: { type: Boolean, default: true, required: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

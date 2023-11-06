@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 const EmployeeSchema = Schema(
 	{
 		userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-		docket: { type: String, unique: true }, // legajo
+		docket: { type: String }, // legajo
 		name: { type: String },
 		lastName: { type: String },
 		cuil: { type: Number },
@@ -14,6 +14,11 @@ const EmployeeSchema = Schema(
 		city: { type: String },
 		zip: { type: Number },
 		state: { type: Boolean, default: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

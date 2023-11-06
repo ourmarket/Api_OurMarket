@@ -1,20 +1,21 @@
 const { response } = require('express');
 const { Employee } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getEmployees = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, employees] = await Promise.all([
-			Employee.countDocuments(query),
-			Employee.find(query).skip(Number(from)).limit(Number(limit)),
-		]);
+		const employees = await Employee.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		}).populate('role', 'role');
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: employees.length,
 			data: {
 				employees,
 			},

@@ -5,24 +5,26 @@ const { User } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail } = require('../config/nodemailer');
 const { getEmailTemplate } = require('../template/emailTemplate');
+/* 
+superUser en la creación de un nuevo usuario debe enviarse a traves del cliente, 
+dentro de los datos enviados via POST.
+*/
 
 const getUsers = async (req = request, res = response) => {
 	try {
-		const { limit = 100000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, users] = await Promise.all([
-			User.countDocuments(query),
-			User.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('role', 'role'),
-		]);
+		const users = await User.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		}).populate('role', ['role', 'type', 'es']);
+
 		res.status(200).json({
 			ok: true,
 			status: 200,
 			data: {
-				total,
+				total: users.length,
 				users,
 			},
 		});

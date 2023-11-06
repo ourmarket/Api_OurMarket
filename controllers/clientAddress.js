@@ -1,25 +1,24 @@
 const { response } = require('express');
 const { ClientAddress } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getClientAddresses = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, clientAddress] = await Promise.all([
-			ClientAddress.countDocuments(query),
-			ClientAddress.find(query)
-				.skip(Number(from))
-				.limit(Number(limit))
-				.populate('client')
-				.populate('user', ['name', 'lastName', 'phone', 'email'])
-				.populate('deliveryZone', ['name', 'cost']),
-		]);
+		const clientAddress = await ClientAddress.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		})
+			.populate('client')
+			.populate('user', ['name', 'lastName', 'phone', 'email'])
+			.populate('deliveryZone', ['name', 'cost']);
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: clientAddress.length,
 			data: {
 				clientAddress,
 			},
@@ -60,10 +59,13 @@ const getClientAddress = async (req, res = response) => {
 const postClientAddress = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const clientAddress = new ClientAddress(data);

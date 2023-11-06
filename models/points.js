@@ -12,6 +12,11 @@ const PointsSchema = Schema(
 		},
 		orderId: { type: Schema.Types.ObjectId, ref: 'Order', default: null },
 		state: { type: Boolean, default: true },
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

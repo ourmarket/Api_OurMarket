@@ -1,20 +1,21 @@
 const { response } = require('express');
 const { Expenses } = require('../models');
+const { getTokenData } = require('../helpers');
 
 const getAllExpenses = async (req, res = response) => {
 	try {
-		const { limit = 1000000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, expenses] = await Promise.all([
-			Expenses.countDocuments(query),
-			Expenses.find(query).skip(Number(from)).limit(Number(limit)),
-		]);
+		const expenses = await Expenses.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
 
-		res.status(200).json({
+		return res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: expenses.length,
 			data: {
 				expenses,
 			},
@@ -52,10 +53,13 @@ const getExpenses = async (req, res = response) => {
 const postExpenses = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const expenses = new Expenses(data);

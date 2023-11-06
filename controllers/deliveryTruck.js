@@ -1,26 +1,25 @@
 const { response } = require('express');
 const { DeliveryTruck, User } = require('../models');
 const bcryptjs = require('bcryptjs');
+const { getTokenData } = require('../helpers');
 
 const getDeliveryTrucks = async (req, res = response) => {
 	try {
-		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true };
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-		const [total, deliveryTrucks] = await Promise.all([
-			DeliveryTruck.countDocuments(query),
-			DeliveryTruck.find(query)
-				.populate('distributor')
-				.populate('user')
-				.populate('defaultZone')
-				.skip(Number(from))
-				.limit(Number(limit)),
-		]);
+		const deliveryTrucks = await DeliveryTruck.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		})
+			.populate('distributor')
+			.populate('user')
+			.populate('defaultZone');
 
-		res.status(200).json({
+		return res.status(200).json({
 			ok: true,
 			status: 200,
-			total,
+			total: deliveryTrucks.length,
 			data: {
 				deliveryTrucks,
 			},
@@ -95,7 +94,13 @@ const postDeliveryTruck = async (req, res = response) => {
 			maximumLoad,
 		} = req.body;
 
-		const existPhone = await User.findOne({ phone });
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const existPhone = await User.findOne({
+			phone,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existPhone && existPhone[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -103,7 +108,10 @@ const postDeliveryTruck = async (req, res = response) => {
 				msg: `El teléfono ${phone} ya esta registrado`,
 			});
 		}
-		const existEmail = await User.findOne({ email });
+		const existEmail = await User.findOne({
+			email,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existEmail && existEmail[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -111,7 +119,10 @@ const postDeliveryTruck = async (req, res = response) => {
 				msg: `El email ${email} ya esta registrado`,
 			});
 		}
-		const existDni = await User.findOne({ dni });
+		const existDni = await User.findOne({
+			dni,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existDni && existDni[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -119,7 +130,10 @@ const postDeliveryTruck = async (req, res = response) => {
 				msg: `El DNI/CUIL ${dni} ya esta registrado`,
 			});
 		}
-		const existPatent = await DeliveryTruck.findOne({ patent });
+		const existPatent = await DeliveryTruck.findOne({
+			patent,
+			superUser: tokenData.UserInfo.superUser,
+		});
 		if (existPatent && existPatent[0]) {
 			return res.status(400).json({
 				ok: false,
@@ -140,6 +154,7 @@ const postDeliveryTruck = async (req, res = response) => {
 			phone,
 			email,
 			verified: true,
+			superUser: tokenData.UserInfo.superUser,
 		});
 
 		// Guardar en BD
@@ -152,6 +167,7 @@ const postDeliveryTruck = async (req, res = response) => {
 			patent,
 			coldChamber,
 			maximumLoad,
+			superUser: tokenData.UserInfo.superUser,
 		});
 
 		// Guardar DB

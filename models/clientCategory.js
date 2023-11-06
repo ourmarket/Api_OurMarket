@@ -6,6 +6,11 @@ const ClientCategorySchema = Schema(
 			type: String,
 			required: [true],
 		},
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

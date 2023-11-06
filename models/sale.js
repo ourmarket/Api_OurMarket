@@ -10,6 +10,12 @@ const SaleSchema = Schema({
 	totalSale: { type: Number },
 	profit: { type: Number },
 	state: { type: Boolean, default: true, required: true },
+
+	superUser: {
+		type: Schema.Types.ObjectId,
+		ref: 'SuperUser',
+		required: true,
+	},
 });
 
 SaleSchema.methods.toJSON = function () {

@@ -1,12 +1,12 @@
 const { check } = require('express-validator');
 const {
-	emailExist,
-	phoneExist,
 	isValidRol,
 	existUserById,
 	existRoleById,
+	getTokenData,
 } = require('../helpers');
 const { validarJWT, validateFields, isAdminRole } = require('../middlewares');
+const { User } = require('../models');
 
 const getUsersValidations = [validarJWT, validateFields];
 
@@ -24,11 +24,48 @@ const postUserValidations = [
 	check('password', 'El password debe de ser más de 6 letras').isLength({
 		min: 6,
 	}),
-	/* check('email', 'El email no es válido').isEmail(), */
-	check('email').custom(emailExist),
+	check('email').custom(async (value, { req }) => {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const exist = await User.findOne({
+			email: value,
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
+		if (exist && exist.email) {
+			throw new Error(`El email ${value}, ya está registrado`);
+		}
+	}),
 	check('phone', 'El teléfono es obligatorio').not().isEmpty(),
 	check('phone', 'Solo números').isNumeric(),
-	check('phone').custom(phoneExist),
+	check('phone').custom(async (value, { req }) => {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
+		const exist = await User.findOne({
+			phone: value,
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
+		if (exist && exist.phone) {
+			throw new Error(`El teléfono ${value}, ya está registrado`);
+		}
+	}),
+	check('role', 'No es un ID válido').isMongoId(),
+	check('role').custom(existRoleById),
+	validateFields,
+];
+const postNewAdminValidations = [
+	check('name', 'El nombre es obligatorio').not().isEmpty(),
+	check('lastName', 'El nombre es obligatorio').not().isEmpty(),
+	check('password', 'El password debe de ser más de 6 letras').isLength({
+		min: 6,
+	}),
+	check('email').not().isEmpty(),
+	check('phone', 'El teléfono es obligatorio').not().isEmpty(),
+	check('phone', 'Solo números').isNumeric(),
+	check('phone').not().isEmpty(),
 	check('role', 'No es un ID válido').isMongoId(),
 	check('role').custom(existRoleById),
 	validateFields,
@@ -64,4 +101,5 @@ module.exports = {
 	deleteUserValidations,
 	getUsersValidations,
 	patchUserValidations,
+	postNewAdminValidations,
 };

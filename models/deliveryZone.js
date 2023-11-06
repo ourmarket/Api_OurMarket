@@ -6,15 +6,30 @@ const DeliveryZoneSchema = Schema({
 	province: { type: String },
 	city: { type: String },
 	zip: { type: String },
+
 	limits: [
 		{
-			north: { type: String, required: true },
-			south: { type: String, required: true },
-			east: { type: String, required: true },
-			west: { type: String, required: true },
+			north: { type: String },
+			south: { type: String },
+			east: { type: String },
+			west: { type: String },
 		},
 	],
+	mapLimits: [
+		{
+			lat: { type: Number },
+			lng: { type: Number },
+		},
+	],
+
+	fillColor: { type: String },
+
 	state: { type: Boolean, default: true, required: true },
+	superUser: {
+		type: Schema.Types.ObjectId,
+		ref: 'SuperUser',
+		required: true,
+	},
 });
 
 DeliveryZoneSchema.methods.toJSON = function () {

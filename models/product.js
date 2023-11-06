@@ -34,6 +34,11 @@ const ProductSchema = Schema(
 				return: { type: Boolean, default: false },
 			},
 		],
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+		},
 	},
 	{ timestamps: true }
 );

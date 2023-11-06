@@ -1,6 +1,10 @@
 const { response } = require('express');
 const { Role } = require('../models');
 
+/* 
+Estos controladores son generales para todos los clientes
+*/
+
 const getRoles = async (req, res = response) => {
 	try {
 		const { limit = 1000, from = 0 } = req.query;
