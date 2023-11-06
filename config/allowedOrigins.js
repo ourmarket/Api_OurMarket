@@ -22,6 +22,7 @@ const allowedOrigins = [
 	'https://our-market-tpv.netlify.app',
 	'https://ourmarket-dashboard.netlify.app',
 	'https://delivery-ourmarket.netlify.app',
+	'https://dashboard-ourmarket.netlify.app',
 ];
 
 module.exports = allowedOrigins;
