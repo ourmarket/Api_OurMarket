@@ -1,6 +1,7 @@
 const allowedOrigins = [
 	'https://dashboard-ourmarket.netlify.app',
 	'https://delivery-ourmarket.netlify.app',
+	'https://tpv-ourmarket.netlify.app',
 	'http://127.0.0.1:5500',
 	'http://localhost:3500',
 	'http://localhost:3010',
