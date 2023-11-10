@@ -25,6 +25,7 @@ const OrderActive = require('./orderActive');
 const Config = require('./config');
 const Expenses = require('./expenses');
 const SuperUser = require('./superUser');
+const CashierSession = require('./cashierSession');
 
 module.exports = {
 	Category,
@@ -53,4 +54,5 @@ module.exports = {
 	Config,
 	Expenses,
 	SuperUser,
+	CashierSession,
 };

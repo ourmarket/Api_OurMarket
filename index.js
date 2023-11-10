@@ -101,6 +101,7 @@ app.use('/api/config', require('./routes/config'));
 
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/superUser', require('./routes/superUser'));
+app.use('/api/cashierSession', require('./routes/cashierSession'));
 
 // -----------error----------------
 app.use(errorHandler);

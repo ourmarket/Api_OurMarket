@@ -55,6 +55,7 @@ const loginCashierSeller = async (req, res) => {
 						role: role.role,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_SECRET,
@@ -67,6 +68,7 @@ const loginCashierSeller = async (req, res) => {
 						role: role.role,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
+						superUserData: foundUser.superUser.superUserData,
 					},
 				},
 				process.env.JWT_REFRESH,
@@ -116,15 +118,10 @@ const loginCashierSeller = async (req, res) => {
 				ok: true,
 				status: 201,
 				accessToken,
-				user: {
-					id: foundUser._id,
-					name: foundUser.name,
-					lastName: foundUser.lastName,
-					email: foundUser.email,
-					phone: foundUser.phone,
-					superUser: foundUser.superUser._id,
-					version: foundUser.superUser.version,
-				},
+				id: foundUser._id,
+				superUser: foundUser.superUser._id,
+				version: foundUser.superUser.version,
+				superUserData: foundUser.superUser.superUserData,
 			});
 		} else {
 			return res.status(401).json({

@@ -239,6 +239,9 @@ const putOrder = async (req, res = response) => {
 		const { id } = req.params;
 		const { state, ...data } = req.body;
 
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
+
 		const order = await Order.findByIdAndUpdate(id, data);
 
 		// Si estaba impaga y paso a estar paga
@@ -248,6 +251,7 @@ const putOrder = async (req, res = response) => {
 				points: Math.trunc(order.subTotal),
 				action: 'buy',
 				orderId: order._id,
+				superUser: tokenData.UserInfo.superUser,
 			};
 
 			const points = new Points(dataPoints);
