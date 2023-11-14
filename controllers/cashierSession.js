@@ -12,7 +12,8 @@ const getCashierSessions = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		})
 			.populate('role', 'role')
-			.populate('user', ['name', 'lastName', 'phone', 'email']);
+			.populate('user', ['name', 'lastName', 'phone', 'email'])
+			.sort({ initDate: -1 });
 
 		res.status(200).json({
 			ok: true,

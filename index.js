@@ -10,6 +10,7 @@ const errorHandler = require('./middlewares/logsErrors');
 require('dotenv').config();
 const { activeClient } = require('./helpers/active-verify');
 const cron = require('node-cron');
+const bodyParser = require('body-parser');
 
 const app = express();
 const http = require('http');
@@ -41,6 +42,9 @@ app.use(express.json());
 
 // Lectura y parseo del body
 app.use(cookieParser());
+
+// Configurar body-parser para aumentar el límite
+app.use(bodyParser.json({ limit: '5mb' })); // Ajusta el límite según sea necesario
 
 // Directorio Público
 app.use(express.static('public'));
