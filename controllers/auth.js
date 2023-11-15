@@ -549,7 +549,12 @@ const loginAdmin = async (req, res) => {
 
 	// Verificar si el email existe
 	let role;
-	const foundUser = await User.findOne({ email }).populate('superUser').exec();
+	const foundUser = await User.findOne({
+		email,
+		role: '636a631dc2e277ca644463ff',
+	})
+		.populate('superUser')
+		.exec();
 
 	if (foundUser) {
 		role = await Role.findById(foundUser.role);

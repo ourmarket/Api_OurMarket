@@ -13,7 +13,7 @@ const router = Router();
  */
 
 router.get('/', getConfig);
-router.post('/', putConfigValidation, postConfig);
+router.post('/', postConfig);
 router.put('/', putConfigValidation, putConfig);
 
 // aplica la config de clientes activos e inactivos
