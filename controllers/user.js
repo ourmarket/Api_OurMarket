@@ -5,6 +5,7 @@ const { User } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail } = require('../config/nodemailer');
 const { getEmailTemplate } = require('../template/emailTemplate');
+const { logger } = require('../helpers/logger');
 /* 
 superUser en la creación de un nuevo usuario debe enviarse a traves del cliente, 
 dentro de los datos enviados via POST.
@@ -29,6 +30,7 @@ const getUsers = async (req = request, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -50,6 +52,7 @@ const getUser = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -102,6 +105,7 @@ const postUser = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -131,6 +135,7 @@ const putUser = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -159,6 +164,7 @@ const patchUser = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -177,6 +183,7 @@ const deleteUser = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -222,7 +229,7 @@ const getUserVerify = async (req, res = response) => {
 
 		return res.redirect('/confirm.html');
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.json({
 			success: false,
 			msg: 'Error al confirmar usuario',
@@ -258,6 +265,7 @@ const putUserChangePassword = async (req, res = response) => {
 			msg: 'Contraseña cambiada correctamente',
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

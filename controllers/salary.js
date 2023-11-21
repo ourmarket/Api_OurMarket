@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { Salary } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getSalaries = async (req, res = response) => {
 	try {
@@ -23,6 +24,7 @@ const getSalaries = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -44,6 +46,7 @@ const getSalary = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -77,6 +80,7 @@ const postSalary = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -100,6 +104,7 @@ const putSalary = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -118,6 +123,7 @@ const deleteSalary = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

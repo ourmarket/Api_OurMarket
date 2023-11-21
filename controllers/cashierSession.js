@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { CashierSession, Order } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getCashierSessions = async (req, res = response) => {
 	try {
@@ -24,6 +25,7 @@ const getCashierSessions = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -66,6 +68,7 @@ const getCashierSession = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -145,6 +148,7 @@ const putCashierSession = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -163,6 +167,7 @@ const deleteCashierSession = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

@@ -10,6 +10,7 @@ const {
 } = require('../models');
 const bcryptjs = require('bcryptjs');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getClients = async (req, res = response) => {
 	try {
@@ -33,6 +34,7 @@ const getClients = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -67,6 +69,7 @@ const getClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -84,6 +87,9 @@ const postClient = async (req, res = response) => {
 		const clientDB = await Client.findOne({ cuit: body.cuit });
 
 		if (clientDB && clientDB.cuit) {
+			logger.error({
+				msg: `El cuit ${clientDB.cuit}, ya existe`,
+			});
 			return res.status(400).json({
 				msg: `El cuit ${clientDB.cuit}, ya existe`,
 			});
@@ -120,6 +126,7 @@ const postClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -143,6 +150,7 @@ const putClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -161,6 +169,7 @@ const deleteClient = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -182,6 +191,7 @@ const getUserClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -202,6 +212,7 @@ const getAddressesClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -235,6 +246,9 @@ const postSimpleClient = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existPhone && existPhone[0]) {
+			logger.error({
+				msg: `El teléfono ${phone} ya esta registrado`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -246,6 +260,9 @@ const postSimpleClient = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existEmail && existEmail[0]) {
+			logger.error({
+				msg: `El email ${email} ya esta registrado`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -346,6 +363,7 @@ const postSimpleClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -369,10 +387,6 @@ const deleteSimpleClient = async (req, res = response) => {
 			{ user: userId, state: true },
 			{ $set: { state: false } }
 		);
-		/* await User.updateMany(
-			{ role: '636a6311c2e277ca644463fb', state: true },
-			{ $set: { state: false } }
-		); */
 
 		res.status(200).json({
 			ok: true,
@@ -380,7 +394,7 @@ const deleteSimpleClient = async (req, res = response) => {
 			userId,
 		});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

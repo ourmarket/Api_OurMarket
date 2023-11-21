@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { ProductLot } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getProductLots = async (req, res = response) => {
 	try {
@@ -27,6 +28,7 @@ const getProductLots = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -53,6 +55,7 @@ const getProductLot = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -86,6 +89,7 @@ const postProductLot = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -111,6 +115,7 @@ const putProductLot = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -129,6 +134,7 @@ const deleteProductLot = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

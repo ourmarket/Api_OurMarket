@@ -1,4 +1,5 @@
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 const { Points, Client } = require('../models');
 const { response } = require('express');
 
@@ -26,6 +27,7 @@ const getAllPoints = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -47,6 +49,7 @@ const getAllPointsByClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -90,6 +93,7 @@ const postPoints = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -112,6 +116,7 @@ const putPoints = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -130,6 +135,7 @@ const deletePoints = async (req, res = response) => {
 			msg: 'Puntos borrados',
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -159,6 +165,7 @@ const resetPoints = async (req, res = response) => {
 			msg: 'Puntos reseteados',
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

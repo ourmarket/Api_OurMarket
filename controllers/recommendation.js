@@ -2,6 +2,7 @@ const { Recommendation, Points } = require('../models');
 const { response } = require('express');
 const { ObjectId } = require('mongodb');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getAllRecommendation = async (req, res = response) => {
 	try {
@@ -27,6 +28,7 @@ const getAllRecommendation = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -85,6 +87,7 @@ const getAllRecommendationByClient = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -114,6 +117,7 @@ const postRecommendation = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -138,6 +142,7 @@ const putRecommendation = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -156,6 +161,7 @@ const deleteRecommendation = async (req, res = response) => {
 			msg: 'Puntos borrados',
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

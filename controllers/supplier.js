@@ -2,6 +2,7 @@
 const { response } = require('express');
 const { Supplier } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getSuppliers = async (req, res = response) => {
 	try {
@@ -21,6 +22,7 @@ const getSuppliers = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -42,6 +44,7 @@ const getSupplier = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -85,6 +88,7 @@ const postSupplier = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -108,6 +112,7 @@ const putSupplier = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

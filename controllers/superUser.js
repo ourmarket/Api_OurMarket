@@ -81,6 +81,7 @@ const postSuperUser = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
+			superUser,
 		};
 
 		const newSuperUser = new SuperUser(data);

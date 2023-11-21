@@ -2,70 +2,121 @@
 const { response } = require('express');
 const { Product, Ofert } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getProducts = async (req, res = response) => {
-	const jwt = req.cookies.jwt;
-	const tokenData = getTokenData(jwt);
+	try {
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-	const { limit = 1000, from = 0 } = req.query;
-	const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const { limit = 100000, from = 0 } = req.query;
+		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
-	const [total, products] = await Promise.all([
-		Product.countDocuments(query),
-		Product.find(query)
-			.populate('user', 'name')
-			.populate('category', 'name')
-			.skip(Number(from))
-			.limit(Number(limit))
-			.sort({ createdAt: -1 }),
-	]);
+		const [total, products] = await Promise.all([
+			Product.countDocuments(query),
+			Product.find(query)
+				.populate('user', 'name')
+				.populate('category', 'name')
+				.skip(Number(from))
+				.limit(Number(limit))
+				.sort({ createdAt: -1 }),
+		]);
 
-	return res.status(200).json({
-		ok: true,
-		status: 200,
-		total,
-		products,
-	});
+		return res.status(200).json({
+			ok: true,
+			status: 200,
+			total,
+			products,
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
 };
 
 const getProduct = async (req, res = response) => {
-	const { id } = req.params;
-	const product = await Product.findById(id)
-		.populate('user', 'name')
-		.populate('category', 'name');
+	try {
+		const { id } = req.params;
+		const product = await Product.findById(id)
+			.populate('user', 'name')
+			.populate('category', 'name');
 
-	res.json(product);
+		res.json(product);
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
 };
 
 const postProduct = async (req, res = response) => {
-	const { state, ...body } = req.body;
-	const jwt = req.cookies.jwt;
-	const tokenData = getTokenData(jwt);
+	try {
+		const { state, ...body } = req.body;
+		const jwt = req.cookies.jwt;
+		const tokenData = getTokenData(jwt);
 
-	// Generar la data a guardar
-	const data = {
-		...body,
-		user: req.user,
-		superUser: tokenData.UserInfo.superUser,
-	};
+		// Generar la data a guardar
+		const data = {
+			...body,
+			user: req.user,
+			superUser: tokenData.UserInfo.superUser,
+		};
 
-	const product = new Product(data);
+		const product = new Product(data);
 
-	// Guardar DB
-	await product.save();
+		// Guardar DB
+		await product.save();
 
-	res.status(200).json(product);
+		res.status(200).json(product);
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
 };
 
 const putProduct = async (req, res = response) => {
-	const { id } = req.params;
-	const { state, user, ...data } = req.body;
+	try {
+		const { id } = req.params;
+		const { state, user, newStock, ...data } = req.body;
 
-	data.user = req.user;
+		data.user = req.user;
 
-	const product = await Product.findByIdAndUpdate(id, data, { new: true });
+		if (newStock) {
+			const productWithNewStock = await Product.findById(id);
 
-	res.json(product);
+			const newData = {
+				stock: [...productWithNewStock.stock, newStock],
+			};
+
+			const product = await Product.findByIdAndUpdate(id, newData, {
+				new: true,
+			});
+
+			return res.json(product);
+		}
+
+		const product = await Product.findByIdAndUpdate(id, data, { new: true });
+
+		res.json(product);
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
 };
 
 const deleteProduct = async (req, res = response) => {
@@ -81,7 +132,7 @@ const deleteProduct = async (req, res = response) => {
 			msg: 'Producto borrado ',
 		});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -173,7 +224,7 @@ const createOrderStock = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -331,7 +382,7 @@ const updateProductStock1 = async (req, res = response) => {
 			});
 		}
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -373,7 +424,7 @@ const updateProductStock = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -410,6 +461,7 @@ const getOfertByProductId = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

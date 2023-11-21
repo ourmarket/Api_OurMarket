@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { Order, Points, Client } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getOrders = async (req, res = response) => {
 	try {
@@ -50,6 +51,7 @@ const getOrders = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -142,7 +144,7 @@ const getOrdersPaginate = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -167,6 +169,7 @@ const getOrder = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -226,6 +229,7 @@ const postOrder = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -280,6 +284,7 @@ const putOrder = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -324,6 +329,7 @@ const deleteOrder = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -348,6 +354,7 @@ const getUserOrder = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -372,6 +379,7 @@ const getClientOrder = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -427,6 +435,7 @@ const getOrdersToday = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -464,6 +473,7 @@ const getOrdersByDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -502,6 +512,7 @@ const getOrdersActives = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -562,6 +573,7 @@ const getOrdersCashier = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -585,6 +597,7 @@ const putOrderSetInactiveAll = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

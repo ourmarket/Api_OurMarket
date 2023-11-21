@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { DeliverySubZone } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getDeliverySubZones = async (req, res = response) => {
 	try {
@@ -23,6 +24,7 @@ const getDeliverySubZones = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -47,6 +49,7 @@ const getDeliverySubZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -90,6 +93,7 @@ const postDeliverySubZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -115,6 +119,7 @@ const putDeliverySubZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -137,6 +142,7 @@ const deleteDeliverySubZone = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

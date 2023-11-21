@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { Config, Order, Client } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getConfig = async (req, res = response) => {
 	try {
@@ -45,6 +46,9 @@ const postConfig = async (req, res = response) => {
 		});
 
 		if (existConfig) {
+			logger.error({
+				msg: `Ya existe una configuración para este usuario`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -71,6 +75,7 @@ const postConfig = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -102,6 +107,7 @@ const putConfig = async (req, res = response) => {
 			config: editConfig,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -151,6 +157,7 @@ const setConfigActiveClient = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,

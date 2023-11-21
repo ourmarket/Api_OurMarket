@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { OrderActive } = require('../models');
+const { logger } = require('../helpers/logger');
 
 const getOrdersActives = async (req, res = response) => {
 	try {
@@ -46,6 +47,7 @@ const getOrdersActives = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -69,6 +71,7 @@ const getOrderActive = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -101,6 +104,7 @@ const postOrderActive = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -124,6 +128,7 @@ const putOrderActive = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -142,6 +147,7 @@ const deleteOrderActive = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

@@ -2,6 +2,7 @@ const { response } = require('express');
 const { DeliveryTruck, User } = require('../models');
 const bcryptjs = require('bcryptjs');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getDeliveryTrucks = async (req, res = response) => {
 	try {
@@ -25,6 +26,7 @@ const getDeliveryTrucks = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -48,6 +50,7 @@ const getDeliveryTruck = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -71,6 +74,7 @@ const getUserDeliveryTruck = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -102,10 +106,13 @@ const postDeliveryTruck = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existPhone && existPhone[0]) {
+			logger.error({
+				msg: `El teléfono ${phone} ya esta registrado en un repartidor`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
-				msg: `El teléfono ${phone} ya esta registrado`,
+				msg: `El teléfono ${phone} ya esta registrado en un repartidor`,
 			});
 		}
 		const existEmail = await User.findOne({
@@ -113,6 +120,9 @@ const postDeliveryTruck = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existEmail && existEmail[0]) {
+			logger.error({
+				msg: `El email ${email} ya esta registrado en un repartidor`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -124,6 +134,9 @@ const postDeliveryTruck = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existDni && existDni[0]) {
+			logger.error({
+				msg: `El DNI/CUIL ${dni} ya esta registrado en un repartidor`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -135,6 +148,9 @@ const postDeliveryTruck = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		});
 		if (existPatent && existPatent[0]) {
+			logger.error({
+				msg: `La patente ${patent} ya esta registrada en un repartidor`,
+			});
 			return res.status(400).json({
 				ok: false,
 				status: 400,
@@ -191,6 +207,7 @@ const postDeliveryTruck = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -216,6 +233,7 @@ const putDeliveryTruck = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -234,6 +252,7 @@ const deleteDeliveryTruck = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

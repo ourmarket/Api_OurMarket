@@ -2,6 +2,7 @@ const { response } = require('express');
 const { DeliveryZone } = require('../models');
 const { getTokenData } = require('../helpers');
 const { ObjectId } = require('mongodb');
+const { logger } = require('../helpers/logger');
 
 const getDeliveryZones = async (req, res = response) => {
 	try {
@@ -22,6 +23,7 @@ const getDeliveryZones = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -43,6 +45,7 @@ const getDeliveryZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -63,6 +66,9 @@ const postDeliveryZone = async (req, res = response) => {
 		});
 
 		if (deliveryZoneDB) {
+			logger.error({
+				msg: `La zona ${deliveryZoneDB.name}, ya existe`,
+			});
 			return res.status(400).json({
 				msg: `La zona ${deliveryZoneDB.name}, ya existe`,
 			});
@@ -87,6 +93,7 @@ const postDeliveryZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -112,6 +119,7 @@ const putDeliveryZone = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -134,6 +142,7 @@ const putDeleteMapZone = async (req, res = response) => {
 			msg: 'Dibujo de zona borrado con éxito',
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -152,6 +161,7 @@ const deleteDeliveryZone = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

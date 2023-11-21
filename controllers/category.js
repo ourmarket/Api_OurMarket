@@ -1,6 +1,7 @@
 const { response } = require('express');
 const { Category } = require('../models');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 const getCategories = async (req, res = response) => {
 	try {
@@ -19,6 +20,7 @@ const getCategories = async (req, res = response) => {
 			categories,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -38,6 +40,7 @@ const getCategory = async (req, res = response) => {
 			category,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -59,6 +62,9 @@ const postCategory = async (req, res = response) => {
 		});
 
 		if (categoryDB) {
+			logger.error({
+				msg: `La categoría ${categoryDB.name}, ya existe`,
+			});
 			return res.status(400).json({
 				msg: `La categoría ${categoryDB.name}, ya existe`,
 			});
@@ -83,6 +89,7 @@ const postCategory = async (req, res = response) => {
 			category,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -106,6 +113,7 @@ const putCategory = async (req, res = response) => {
 			category,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -125,6 +133,7 @@ const deleteCategory = async (req, res = response) => {
 			msg: 'Categoria borrada',
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,

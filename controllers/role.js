@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { Role } = require('../models');
+const { logger } = require('../helpers/logger');
 
 /* 
 Estos controladores son generales para todos los clientes
@@ -24,6 +25,7 @@ const getRoles = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -45,6 +47,7 @@ const getRole = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -83,6 +86,7 @@ const postRole = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -106,6 +110,7 @@ const putRole = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -124,6 +129,7 @@ const deleteRole = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

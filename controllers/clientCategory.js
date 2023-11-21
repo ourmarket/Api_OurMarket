@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { ClientCategory } = require('../models');
+const { logger } = require('../helpers/logger');
 
 /* 
 Estos controladores son generales para todos los clientes
@@ -23,6 +24,7 @@ const getClientCategories = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -44,6 +46,7 @@ const getClientCategory = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -84,6 +87,7 @@ const postClientCategory = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -109,6 +113,7 @@ const putClientCategory = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -127,6 +132,7 @@ const deleteClientCategory = async (req, res = response) => {
 			status: 200,
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

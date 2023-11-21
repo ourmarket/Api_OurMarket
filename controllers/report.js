@@ -5,6 +5,7 @@ const { Order, Product } = require('../models');
 const { Client } = require('../models');
 const { ObjectId } = require('mongodb');
 const { getTokenData } = require('../helpers');
+const { logger } = require('../helpers/logger');
 
 // ordenes, total, por mes, por dia
 
@@ -193,6 +194,7 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 			});
 		}
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -284,6 +286,7 @@ const reportTotalOrdersByDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -339,6 +342,7 @@ const reportTotalOrders = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -434,6 +438,7 @@ const reportTotalOrders21_03 = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -527,6 +532,7 @@ const reportTotalOrdersProducts = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -632,6 +638,7 @@ const reportTotalOrdersProductsByDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -709,6 +716,7 @@ const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -790,6 +798,7 @@ const reportTotalOrdersProductsByRange = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -884,6 +893,7 @@ const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1243,6 +1253,7 @@ const reportTotalIndividualProduct = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1428,6 +1439,7 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1495,6 +1507,7 @@ const reportNewClientByMonth = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1584,6 +1597,7 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1766,6 +1780,7 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1845,6 +1860,7 @@ const reportTotalStock = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -1937,6 +1953,7 @@ const reportTotalClientDebt = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -2059,6 +2076,7 @@ const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -2200,6 +2218,7 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -2319,6 +2338,7 @@ const reportTotalClientBuyIndividual = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,
@@ -2465,6 +2485,7 @@ const reportTotalClientBuyIndividualByDay = async (req, res = response) => {
 			},
 		});
 	} catch (error) {
+		logger.error(error);
 		res.status(500).json({
 			ok: false,
 			status: 500,

@@ -1,21 +1,23 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const { dbConnection } = require('./database/config');
-const { logger } = require('./middlewares/logsEvents');
+const expressWinston = require('express-winston');
 const credentials = require('./middlewares/credentials');
 const cors = require('cors');
 const corsOptions = require('./config/corsOptions');
 const cookieParser = require('cookie-parser');
-const errorHandler = require('./middlewares/logsErrors');
 require('dotenv').config();
 const { activeClient } = require('./helpers/active-verify');
 const cron = require('node-cron');
 const bodyParser = require('body-parser');
+const { requestLogger, logger } = require('./helpers/logger');
+const requestIp = require('request-ip');
 
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const Sockets = require('./sockets/sockets');
+
 const io = require('socket.io')(server, {
 	cors: { origin: '*' },
 });
@@ -29,10 +31,22 @@ connection();
 // ---------middlewares-------------
 
 // Logs
-app.use(logger);
+
+app.use(
+	expressWinston.logger({
+		winstonInstance: requestLogger,
+		statusLevels: true,
+	})
+);
+
+expressWinston.requestWhitelist.push('body');
+expressWinston.responseWhitelist.push('body');
 
 // Credentials
 app.use(credentials);
+
+// Utiliza el middleware de request-ip
+app.use(requestIp.mw());
 
 // CORS
 app.use(cors(corsOptions));
@@ -108,7 +122,11 @@ app.use('/api/superUser', require('./routes/superUser'));
 app.use('/api/cashierSession', require('./routes/cashierSession'));
 
 // -----------error----------------
-app.use(errorHandler);
+app.use(
+	expressWinston.errorLogger({
+		winstonInstance: logger,
+	})
+);
 
 // -----------Listen----------------
 
