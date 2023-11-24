@@ -31,6 +31,11 @@ const cashierSessionSchema = Schema(
 			ref: 'SuperUser',
 			required: true,
 		},
+
+		state: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	{ timestamps: true }
 );
