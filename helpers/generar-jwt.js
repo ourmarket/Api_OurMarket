@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { logger } = require('./logger');
 
 /* const getToken = (id = "") => {
   return new Promise((resolve, reject) => {
@@ -37,7 +38,7 @@ const getTokenData = (token) => {
 
 	jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
 		if (err) {
-			console.log('Error al obtener data del token', err);
+			logger.error('Error al obtener data del token', err);
 		} else {
 			data = decoded;
 		}
@@ -49,7 +50,7 @@ const getRefreshTokenData = (token) => {
 	let data = null;
 	jwt.verify(token, process.env.JWT_REFRESH, async (err, decoded) => {
 		if (err) {
-			console.log('Error al obtener data del token', err);
+			logger.error('Error al obtener data del token', err);
 		} else {
 			data = decoded;
 		}

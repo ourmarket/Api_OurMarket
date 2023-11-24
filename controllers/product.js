@@ -470,6 +470,40 @@ const getOfertByProductId = async (req, res = response) => {
 	}
 };
 
+const deleteOldStock = async (req, res = response) => {
+	try {
+		const products = await Product.find();
+
+		for (let i = 0; i < products.length; i++) {
+			for (let x = 0; x < products[i].stock.length; x++) {
+				if (products[i].stock[x].stock < 1) {
+					products[i].stock.splice(x, 1);
+				}
+			}
+			const id = products[i]._id;
+
+			await Product.findByIdAndUpdate(
+				id,
+				{ stock: products[i].stock },
+				{ new: true }
+			);
+		}
+
+		res.status(200).json({
+			ok: false,
+			status: 500,
+			msg: 'Limpieza de stock correcta',
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+
 module.exports = {
 	postProduct,
 	getProducts,
@@ -480,4 +514,5 @@ module.exports = {
 	updateProductStock1,
 	getOfertByProductId,
 	createOrderStock,
+	deleteOldStock,
 };

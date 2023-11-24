@@ -41,6 +41,8 @@ const getCashierSession = async (req, res = response) => {
 		const session = await CashierSession.findById(id).populate('user', [
 			'name',
 			'lastName',
+			'email',
+			'phone',
 		]);
 
 		if (orders === 'all') {

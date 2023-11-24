@@ -19,6 +19,7 @@ const ProductSchema = Schema(
 
 		stock: [
 			{
+				buyId: { type: String },
 				productId: { type: String },
 				name: { type: String },
 				img: { type: String },

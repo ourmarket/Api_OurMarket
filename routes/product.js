@@ -13,11 +13,13 @@ const {
 	updateProductStock,
 	getOfertByProductId,
 	updateProductStock1,
+	deleteOldStock,
 } = require('../controllers/product');
 const { Router } = require('express');
 const router = Router();
 
 router.get('/', getProducts);
+router.get('/deleteOldStock', deleteOldStock);
 router.get('/:id', getProductValidator, getProduct);
 router.get('/ofert/:id', getOfertByProductId);
 router.post('/', postProductValidator, postProduct);
