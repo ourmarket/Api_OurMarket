@@ -14,7 +14,10 @@ const { logger } = require('../helpers/logger');
 
 const getClients = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const clients = await Client.find({
@@ -81,7 +84,10 @@ const getClient = async (req, res = response) => {
 const postClient = async (req, res = response) => {
 	try {
 		const { state, recommendation, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const clientDB = await Client.findOne({ cuit: body.cuit });
@@ -238,7 +244,10 @@ const postSimpleClient = async (req, res = response) => {
 			address,
 		} = req.body;
 
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const existPhone = await User.findOne({

@@ -20,8 +20,11 @@ module.exports = (io) => {
 			const superUser = tokenData.UserInfo.superUser;
 
 			if (data?.truckId && data.superUser === superUser) {
-				console.log('CLIENTE EMITIÓ: ', data);
 				deliveryPosition.emit('delivery', data);
+
+				if (process.env.NODE_ENV !== 'production') {
+					console.log('CLIENTE EMITIÓ: ', data);
+				}
 			}
 		});
 

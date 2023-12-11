@@ -25,7 +25,10 @@ const postUserValidations = [
 		min: 6,
 	}),
 	check('email').custom(async (value, { req }) => {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const exist = await User.findOne({
@@ -40,7 +43,10 @@ const postUserValidations = [
 	check('phone', 'El teléfono es obligatorio').not().isEmpty(),
 	check('phone', 'Solo números').isNumeric(),
 	check('phone').custom(async (value, { req }) => {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const exist = await User.findOne({

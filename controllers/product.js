@@ -6,7 +6,10 @@ const { logger } = require('../helpers/logger');
 
 const getProducts = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const { limit = 100000, from = 0 } = req.query;
@@ -19,7 +22,7 @@ const getProducts = async (req, res = response) => {
 				.populate('category', 'name')
 				.skip(Number(from))
 				.limit(Number(limit))
-				.sort({ createdAt: -1 }),
+				.sort({ name: 1 }),
 		]);
 
 		return res.status(200).json({
@@ -59,7 +62,10 @@ const getProduct = async (req, res = response) => {
 const postProduct = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
@@ -436,7 +442,10 @@ const updateProductStock = async (req, res = response) => {
 const getOfertByProductId = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const ofert = await Ofert.findOne({
 			product: id,
@@ -473,11 +482,13 @@ const getOfertByProductId = async (req, res = response) => {
 const deleteOldStock = async (req, res = response) => {
 	try {
 		const products = await Product.find();
+		let count = 0;
 
 		for (let i = 0; i < products.length; i++) {
 			for (let x = 0; x < products[i].stock.length; x++) {
-				if (products[i].stock[x].stock < 1) {
+				if (products[i].stock[x].stock < 0.9) {
 					products[i].stock.splice(x, 1);
+					count = count + 1;
 				}
 			}
 			const id = products[i]._id;
@@ -491,7 +502,8 @@ const deleteOldStock = async (req, res = response) => {
 
 		res.status(200).json({
 			ok: false,
-			status: 500,
+			status: 200,
+			borrados: count,
 			msg: 'Limpieza de stock correcta',
 		});
 	} catch (error) {

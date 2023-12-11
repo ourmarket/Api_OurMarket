@@ -13,7 +13,10 @@ const { logger } = require('../helpers/logger');
 const reportTotalOrdersByMonth = async (req, res = response) => {
 	try {
 		const { client = '' } = req.query;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		if (!client) {
@@ -205,7 +208,10 @@ const reportTotalOrdersByMonth = async (req, res = response) => {
 
 const reportTotalOrdersByDay = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const report = await Order.aggregate([
 			{
@@ -296,7 +302,10 @@ const reportTotalOrdersByDay = async (req, res = response) => {
 };
 const reportTotalOrders = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -353,7 +362,10 @@ const reportTotalOrders = async (req, res = response) => {
 // Limitado desde el 21/03/2023
 const reportTotalOrders21_03 = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -449,7 +461,10 @@ const reportTotalOrders21_03 = async (req, res = response) => {
 // productos, total, por mes, por dia
 const reportTotalOrdersProducts = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -543,7 +558,10 @@ const reportTotalOrdersProducts = async (req, res = response) => {
 
 const reportTotalOrdersProductsByDay = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -648,7 +666,10 @@ const reportTotalOrdersProductsByDay = async (req, res = response) => {
 };
 const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -726,7 +747,10 @@ const reportTotalOrdersProductsByMonth = async (req, res = response) => {
 };
 const reportTotalOrdersProductsByRange = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const { from, to } = req.body; // "Tue, 21 Mar 2023 00:00:00 GMT"
@@ -809,7 +833,10 @@ const reportTotalOrdersProductsByRange = async (req, res = response) => {
 const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -904,7 +931,10 @@ const reportTotalOrdersProductsByRangeTest = async (req, res = response) => {
 const reportTotalIndividualProduct = async (req, res = response) => {
 	const { id } = req.params;
 	const { client } = req.query;
-	const jwt = req.cookies.jwt;
+	const jwt =
+		req.cookies.jwt_dashboard ||
+		req.cookies.jwt_tpv ||
+		req.cookies.jwt_deliveryApp;
 	const tokenData = getTokenData(jwt);
 
 	try {
@@ -1267,7 +1297,10 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 
 	try {
 		let report;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		if (client) {
@@ -1451,7 +1484,10 @@ const reportTotalIndividualProductLast30days = async (req, res = response) => {
 // clientes, total, por mes
 const reportNewClientByMonth = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Client.aggregate([
@@ -1519,7 +1555,10 @@ const reportNewClientByMonth = async (req, res = response) => {
 const reportPaymentByRangeDay = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -1608,7 +1647,10 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 const reportTotalSellByRangeDay = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -1791,7 +1833,10 @@ const reportTotalSellByRangeDay = async (req, res = response) => {
 // stock
 const reportTotalStock = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Product.aggregate([
@@ -1872,7 +1917,10 @@ const reportTotalStock = async (req, res = response) => {
 // clients
 const reportTotalClientDebt = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -1965,7 +2013,10 @@ const reportTotalClientDebt = async (req, res = response) => {
 const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 	try {
 		const { from, to } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -2086,7 +2137,10 @@ const reportTotalClientBuyByRangeDays = async (req, res = response) => {
 };
 const reportTotalClientBuyAll = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -2229,7 +2283,10 @@ const reportTotalClientBuyAll = async (req, res = response) => {
 const reportTotalClientBuyIndividual = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([
@@ -2349,7 +2406,10 @@ const reportTotalClientBuyIndividual = async (req, res = response) => {
 const reportTotalClientBuyIndividualByDay = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([

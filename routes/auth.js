@@ -1,30 +1,38 @@
 const { Router } = require('express');
-
-const {
-	googleSignin,
-	loginAdmin,
-	refresh,
-	logout,
-	loginUser,
-	loginDeliveryTruck,
-
-	loginCashierSeller,
-} = require('../controllers/auth');
 const { loginValidator } = require('../validations/auth/loginValidator');
+const {
+	loginDashboard,
+	refreshDashboard,
+	logoutDashboard,
+} = require('../controllers/auth/authDashboard');
+const {
+	loginTpv,
+	refreshTpv,
+	logoutTpv,
+} = require('../controllers/auth/authTpv');
+const {
+	loginDeliveryApp,
+	refreshDeliveryApp,
+	logoutDeliveryApp,
+} = require('../controllers/auth/authDeliveryApp');
 
 const router = Router();
 
-router.post('/login', loginValidator, loginUser);
-router.post('/login_cashier_seller', loginValidator, loginCashierSeller);
+/* 
+/api/auth
+*/
 
-// repartidor
-router.post('/login-delivery', loginValidator, loginDeliveryTruck);
-
-router.post('/google', googleSignin);
-
-// nuevo sistema de login para el dashboard
-router.post('/login2', loginValidator, loginAdmin);
-router.get('/refresh', refresh);
-router.get('/logout2', logout);
+// Dashboard
+router.post('/dashboard/login', loginValidator, loginDashboard);
+router.get('/dashboard/refresh', refreshDashboard);
+router.post('/dashboard/logout', logoutDashboard);
+// TPV
+router.post('/tpv/login', loginValidator, loginTpv);
+router.get('/tpv/refresh', refreshTpv);
+router.post('/tpv/logout', logoutTpv);
+// Delivery App
+router.post('/deliveryApp/login', loginValidator, loginDeliveryApp);
+router.get('/deliveryApp/refresh', refreshDeliveryApp);
+router.post('/deliveryApp/logout', logoutDeliveryApp);
 
 module.exports = router;

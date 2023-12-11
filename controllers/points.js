@@ -5,7 +5,10 @@ const { response } = require('express');
 
 const getAllPoints = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const { limit = 100000, from = 0 } = req.query;
 		const query = { state: true, superUser: tokenData.UserInfo.superUser };
@@ -61,7 +64,10 @@ const postPoints = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
 
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
@@ -145,7 +151,10 @@ const deletePoints = async (req, res = response) => {
 };
 const resetPoints = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		await Points.updateMany(

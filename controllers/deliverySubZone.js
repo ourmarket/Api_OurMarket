@@ -5,7 +5,10 @@ const { logger } = require('../helpers/logger');
 
 const getDeliverySubZones = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const deliverySubZones = await DeliverySubZone.find({
@@ -61,7 +64,10 @@ const getDeliverySubZone = async (req, res = response) => {
 const postDeliverySubZone = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const deliverySubZoneDB = await DeliverySubZone.findOne({

@@ -6,7 +6,10 @@ const { logger } = require('../helpers/logger');
 
 const getDeliveryTrucks = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const deliveryTrucks = await DeliveryTruck.find({
@@ -98,7 +101,10 @@ const postDeliveryTruck = async (req, res = response) => {
 			maximumLoad,
 		} = req.body;
 
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const existPhone = await User.findOne({

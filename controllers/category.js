@@ -5,7 +5,10 @@ const { logger } = require('../helpers/logger');
 
 const getCategories = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const categories = await Category.find({
@@ -52,7 +55,10 @@ const getCategory = async (req, res = response) => {
 const postCategory = async (req, res = response) => {
 	try {
 		const { name, img } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const categoryDB = await Category.findOne({

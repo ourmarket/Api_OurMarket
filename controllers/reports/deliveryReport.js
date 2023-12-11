@@ -8,7 +8,10 @@ const deliveryOrders = async (req, res = response) => {
 	try {
 		const { id } = req.params;
 		const { from, to } = req.body; // "Tue, 21 Mar 2023 00:00:00 GMT"
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const report = await Order.aggregate([

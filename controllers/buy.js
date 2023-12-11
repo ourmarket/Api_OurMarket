@@ -1,11 +1,14 @@
 const { response } = require('express');
-const { Employee, Buy, Product } = require('../models');
+const { Buy, Product } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getBuys = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const buys = await Buy.find({
@@ -56,7 +59,10 @@ const getBuy = async (req, res = response) => {
 const postBuy = async (req, res = response) => {
 	try {
 		const { state, products, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
@@ -75,23 +81,23 @@ const postBuy = async (req, res = response) => {
 			const newStock = {
 				productId: id,
 				name: product.name,
-				img: product.name,
+				img: product.img,
 				supplier: body.supplier,
 				quantity: products[i].quantity,
 				cost: products[i].totalCost,
 				unityCost: products[i].unitCost,
 				stock: products[i].quantity,
 				createdStock: new Date(),
-				updateStock: null,
+				updateStock: new Date(),
 				return: false,
 			};
 
-			const stock = [...products[i].stock, newStock];
+			const stock = [...product.stock, newStock];
 
 			await Product.findByIdAndUpdate(id, { stock }, { new: true });
 		}
 
-		const buy = new Employee(data);
+		const buy = new Buy(data);
 
 		// Guardar DB
 		await buy.save();

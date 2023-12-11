@@ -21,6 +21,8 @@ const {
 	Salary,
 	Supplier,
 } = require('../models');
+const bcryptjs = require('bcryptjs');
+const { logger } = require('../helpers/logger');
 
 const getSuperUsers = async (req, res = response) => {
 	try {
@@ -67,34 +69,99 @@ const getSuperUser = async (req, res = response) => {
 };
 
 const postSuperUser = async (req, res = response) => {
-	try {
-		const { superUser, ...body } = req.body;
+	let superUserId = null;
+	let userAdminId = null;
+	let configId = null;
 
-		const superUserDB = await SuperUser.findOne({ superUser });
+	try {
+		const { superUser, config, userAdmin } = req.body;
+
+		// 1. Crear el superUsuario
+
+		const superUserDB = await SuperUser.findOne({
+			clientId: superUser.clientId,
+		});
 
 		if (superUserDB) {
 			return res.status(400).json({
-				msg: `El superUser ${superUserDB.superUser}, ya existe`,
+				msg: `El superUser ${superUser.clientId}, ya existe`,
 			});
 		}
 
-		// Generar la data a guardar
-		const data = {
-			...body,
-			superUser,
+		const dataSuperUser = {
+			...superUser,
 		};
 
-		const newSuperUser = new SuperUser(data);
+		const newSuperUser = new SuperUser(dataSuperUser);
 
-		// Guardar DB
+		superUserId = newSuperUser._id;
+
+		// 2. Crear el administrador
+
+		const email = userAdmin.email;
+
+		const findEmail = await User.findOne({
+			email,
+			superUser: newSuperUser.superUser,
+		});
+
+		if (findEmail) {
+			logger.error(`El email ${email}, ya existe`);
+			return res.status(400).json({
+				ok: false,
+				status: 200,
+				msg: `El email ${email}, ya existe`,
+			});
+		}
+
+		const salt = bcryptjs.genSaltSync();
+		const newPassword = bcryptjs.hashSync(userAdmin.password, salt);
+
+		const dataUserAdmin = {
+			...userAdmin,
+			password: newPassword,
+			verified: true,
+			superUser: newSuperUser._id,
+		};
+
+		const newUserAdmin = new User(dataUserAdmin);
+		userAdminId = newUserAdmin._id;
+
+		// 3. Crear la config
+
+		const dataConfig = {
+			...config,
+			superUser: newSuperUser._id,
+		};
+
+		const newConfig = new Config(dataConfig);
+		configId = newConfig._id;
+
+		// 4 Guardar todo en DB
+
 		await newSuperUser.save();
+		await newUserAdmin.save();
+		await newConfig.save();
 
 		return res.status(201).json({
 			ok: true,
 			status: 200,
 			superUser: newSuperUser,
+			userAdmin: newUserAdmin,
+			config: newConfig,
 		});
 	} catch (error) {
+		if (superUserId) {
+			await SuperUser.deleteOne({ _id: superUserId });
+		}
+		if (userAdminId) {
+			await User.deleteOne({ _id: userAdminId });
+		}
+		if (configId) {
+			await Config.deleteOne({ _id: configId });
+		}
+
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,

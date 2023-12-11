@@ -13,7 +13,10 @@ dentro de los datos enviados via POST.
 
 const getUsers = async (req = request, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const users = await User.find({

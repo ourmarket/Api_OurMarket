@@ -6,13 +6,16 @@ const { logger } = require('../helpers/logger');
 
 const getSuppliers = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const suppliers = await Supplier.find({
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
-		});
+		}).sort({ businessName: 1 });
 
 		res.status(200).json({
 			ok: true,
@@ -56,7 +59,10 @@ const getSupplier = async (req, res = response) => {
 const postSupplier = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const supplierDB = await Supplier.findOne({

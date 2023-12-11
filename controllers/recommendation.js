@@ -6,7 +6,10 @@ const { logger } = require('../helpers/logger');
 
 const getAllRecommendation = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const { limit = 1000000, from = 0 } = req.query;
 		const query = { state: true, superUser: tokenData.UserInfo.superUser };

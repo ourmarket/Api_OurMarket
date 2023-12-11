@@ -6,7 +6,10 @@ const { logger } = require('../helpers/logger');
 const getOrders = async (req, res = response) => {
 	try {
 		const { limit = 10000000, from = 0, active, delivery = '' } = req.query;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const query = { state: true, superUser: tokenData.UserInfo.superUser };
 
@@ -62,7 +65,10 @@ const getOrders = async (req, res = response) => {
 
 const getOrdersPaginate = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const { limit = 10000, page = 1, active = 'false', paid } = req.query;
 		// active = "false"  => all
@@ -181,7 +187,10 @@ const getOrder = async (req, res = response) => {
 const postOrder = async (req, res = response) => {
 	try {
 		const { state, paid, subTotal, client, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const data = {
@@ -243,7 +252,10 @@ const putOrder = async (req, res = response) => {
 		const { id } = req.params;
 		const { state, ...data } = req.body;
 
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const order = await Order.findByIdAndUpdate(id, data);
@@ -390,7 +402,10 @@ const getClientOrder = async (req, res = response) => {
 
 const getOrdersToday = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const today = new Date();
 
@@ -446,7 +461,10 @@ const getOrdersToday = async (req, res = response) => {
 const getOrdersByDay = async (req, res = response) => {
 	try {
 		const { days } = req.params;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const orders = await Order.find({
 			state: true,
@@ -485,7 +503,10 @@ const getOrdersByDay = async (req, res = response) => {
 const getOrdersActives = async (req, res = response) => {
 	try {
 		const { limit = 1000, from = 0 } = req.query;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const query = {
 			state: true,
@@ -524,7 +545,10 @@ const getOrdersActives = async (req, res = response) => {
 const getClientOrderDebt = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const orders = await Order.find({
@@ -554,7 +578,10 @@ const getClientOrderDebt = async (req, res = response) => {
 
 const getOrdersCashier = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		const orders = await Order.find({
@@ -584,7 +611,10 @@ const getOrdersCashier = async (req, res = response) => {
 
 const putOrderSetInactiveAll = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		await Order.updateMany(

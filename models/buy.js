@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 
 const BuySchema = Schema(
 	{
+		user: { type: Schema.Types.ObjectId, ref: 'User' },
 		supplier: { type: Schema.Types.ObjectId, ref: 'Supplier', required: true },
 		quantityProducts: { type: Number },
 		total: { type: Number },

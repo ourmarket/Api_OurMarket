@@ -15,7 +15,10 @@ const getCategoryReport = async (req, res = response) => {
 	const from = new Date(year, month, day, 0, 0, 0, 0);
 
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		let report = {};
 
@@ -393,7 +396,10 @@ const getCategoryReport = async (req, res = response) => {
 const getCategoryReportByDay = async (req, res = response) => {
 	const from = new Date(new Date().setDate(new Date().getDate() - 30));
 	const { category } = req.params;
-	const jwt = req.cookies.jwt;
+	const jwt =
+		req.cookies.jwt_dashboard ||
+		req.cookies.jwt_tpv ||
+		req.cookies.jwt_deliveryApp;
 	const tokenData = getTokenData(jwt);
 
 	try {

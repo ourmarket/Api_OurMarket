@@ -121,6 +121,8 @@ app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/superUser', require('./routes/superUser'));
 app.use('/api/cashierSession', require('./routes/cashierSession'));
 
+app.use('/api/buy', require('./routes/buy'));
+
 // -----------error----------------
 app.use(
 	expressWinston.errorLogger({

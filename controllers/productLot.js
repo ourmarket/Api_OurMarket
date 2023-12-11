@@ -5,7 +5,10 @@ const { logger } = require('../helpers/logger');
 
 const getProductLots = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		const { limit = 1000000, from = 0 } = req.query;
 		const query = { state: true, superUser: tokenData.UserInfo.superUser };
@@ -67,7 +70,10 @@ const getProductLot = async (req, res = response) => {
 const postProductLot = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt = req.cookies.jwt;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
