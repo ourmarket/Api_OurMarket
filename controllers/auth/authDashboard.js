@@ -37,7 +37,9 @@ const loginDashboard = async (req, res) => {
 		let role;
 		const foundUser = await User.findOne({
 			email,
+			superUser: foundClientId._id,
 			role: '636a631dc2e277ca644463ff',
+			state: true,
 		})
 			.populate('superUser')
 			.exec();

@@ -34,7 +34,11 @@ const loginDeliveryApp = async (req, res) => {
 
 		// Verificar si el email existe
 		let role;
-		const foundUser = await User.findOne({ email })
+		const foundUser = await User.findOne({
+			email,
+			superUser: foundClientId._id,
+			state: true,
+		})
 			.populate('superUser')
 			.exec();
 
