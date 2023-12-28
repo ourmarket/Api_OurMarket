@@ -3,6 +3,24 @@ const { Buy, Product } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
+// recibe TODO el stock por parámetro y el nuevo stock
+
+const addStock = (stocks, newStock) => {
+	const index = stocks.findIndex(
+		(product) => product.unityCost === newStock.unityCost
+	);
+
+	if (index !== -1) {
+		stocks[index].quantity += newStock.quantity;
+		stocks[index].stock += newStock.stock;
+		stocks[index].updateStock = new Date();
+	} else {
+		stocks.push(newStock);
+	}
+
+	return stocks;
+};
+
 const getBuys = async (req, res = response) => {
 	try {
 		const jwt =
@@ -37,7 +55,9 @@ const getBuys = async (req, res = response) => {
 const getBuy = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const buy = await Buy.findById(id);
+		const buy = await Buy.findById(id)
+			.populate('supplier', 'businessName')
+			.populate('user', ['name', 'lastName', 'phone', 'email']);
 
 		res.status(200).json({
 			ok: true,
@@ -78,23 +98,27 @@ const postBuy = async (req, res = response) => {
 			const id = products[i].productId;
 			const product = await Product.findById(id);
 
+			const stocks = product.stock;
+
 			const newStock = {
 				productId: id,
 				name: product.name,
 				img: product.img,
-				supplier: body.supplier,
 				quantity: products[i].quantity,
 				cost: products[i].totalCost,
 				unityCost: products[i].unitCost,
 				stock: products[i].quantity,
 				createdStock: new Date(),
-				updateStock: new Date(),
-				return: false,
+				updateStock: null,
 			};
 
-			const stock = [...product.stock, newStock];
+			const addStockNew = addStock(stocks, newStock);
 
-			await Product.findByIdAndUpdate(id, { stock }, { new: true });
+			await Product.findByIdAndUpdate(
+				id,
+				{ stock: addStockNew },
+				{ new: true }
+			);
 		}
 
 		const buy = new Buy(data);
@@ -119,8 +143,29 @@ const postBuy = async (req, res = response) => {
 	}
 };
 
+const deleteBuy = async (req, res = response) => {
+	try {
+		const { id } = req.params;
+		await Buy.findByIdAndUpdate(id, { state: false }, { new: true });
+
+		return res.status(200).json({
+			ok: true,
+			status: 200,
+			msg: 'Compra borrada',
+		});
+	} catch (error) {
+		logger.error(error);
+		return res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+
 module.exports = {
 	getBuys,
 	getBuy,
 	postBuy,
+	deleteBuy,
 };

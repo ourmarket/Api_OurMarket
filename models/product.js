@@ -19,20 +19,15 @@ const ProductSchema = Schema(
 
 		stock: [
 			{
-				buyId: { type: String },
 				productId: { type: String },
 				name: { type: String },
 				img: { type: String },
-				supplier: { type: String },
 				quantity: { type: Number },
 				cost: { type: Number },
 				unityCost: { type: Number },
 				stock: { type: Number },
-				location: { type: String },
-				moveDate: { type: Date },
 				createdStock: { type: Date },
 				updateStock: { type: Date },
-				return: { type: Boolean, default: false },
 			},
 		],
 		superUser: {

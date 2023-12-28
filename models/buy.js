@@ -21,12 +21,15 @@ const BuySchema = Schema(
 					required: true,
 				},
 				name: { type: String },
+				img: { type: String },
 
 				quantity: { type: Number },
 				unitCost: { type: Number },
 				totalCost: { type: Number },
 			},
 		],
+
+		paid: { type: Boolean, default: false },
 
 		state: { type: Boolean, default: true, required: true },
 

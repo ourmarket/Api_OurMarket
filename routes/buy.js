@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getBuys, getBuy, postBuy } = require('../controllers/buy');
+const { getBuys, getBuy, postBuy, deleteBuy } = require('../controllers/buy');
 
 const router = Router();
 
@@ -10,6 +10,7 @@ const router = Router();
 router.get('/', getBuys);
 router.get('/:id', getBuy);
 router.post('/', postBuy);
+router.delete('/:id', deleteBuy);
 /* router.put('/:id', putCashierSessionValidation, putCashierSession);
 router.delete('/:id', deleteCashierSessionValidation, deleteCashierSession); */
 
