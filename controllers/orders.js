@@ -300,60 +300,68 @@ const putOrder = async (req, res = response) => {
 		const { id } = req.params;
 		const { state, ...data } = req.body;
 
-		/* 		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt); */
+		if (data?.orderItems) {
+			for (let i = 0; i < data.orderItems.length; i++) {
+				for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
+					const stockId = data.orderItems[i].stockData[x].stockId;
+					const newStock = data.orderItems[i].stockData[x].quantityNew;
 
-		for (let i = 0; i < data.orderItems.length; i++) {
-			for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
-				const stockId = data.orderItems[i].stockData[x].stockId;
-				const newStock = data.orderItems[i].stockData[x].quantityNew;
-
-				const res = await Stock.findByIdAndUpdate(stockId, { stock: newStock });
-				console.log(res);
+					const res = await Stock.findByIdAndUpdate(stockId, {
+						stock: newStock,
+					});
+					console.log(res);
+				}
 			}
-		}
 
-		// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
-		const filterEmptyProducts = data.orderItems.filter(
-			(product) => product.totalQuantity
-		);
-		const dataFilter = {
-			...data,
-			orderItems: filterEmptyProducts,
-		};
-
-		const order = await Order.findByIdAndUpdate(id, dataFilter);
-
-		// Si estaba impaga y paso a estar paga
-		/* if (order.paid === false && req.body.paid === true) {
-			const dataPoints = {
-				clientId: order.client,
-				points: Math.trunc(order.subTotal),
-				action: 'buy',
-				orderId: order._id,
-				superUser: tokenData.UserInfo.superUser,
+			// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
+			const filterEmptyProducts = data.orderItems.filter(
+				(product) => product.totalQuantity
+			);
+			const dataFilter = {
+				...data,
+				orderItems: filterEmptyProducts,
 			};
 
-			const points = new Points(dataPoints);
-			// Guardar DB
-			await points.save();
+			const order = await Order.findByIdAndUpdate(id, dataFilter);
 
-			// actualizo puntos dentro de cliente
-			const pointsData = await Points.find({
-				state: true,
-				clientId: order.client,
+			// Si estaba impaga y paso a estar paga
+			/* if (order.paid === false && req.body.paid === true) {
+				const dataPoints = {
+					clientId: order.client,
+					points: Math.trunc(order.subTotal),
+					action: 'buy',
+					orderId: order._id,
+					superUser: tokenData.UserInfo.superUser,
+				};
+	
+				const points = new Points(dataPoints);
+				// Guardar DB
+				await points.save();
+	
+				// actualizo puntos dentro de cliente
+				const pointsData = await Points.find({
+					state: true,
+					clientId: order.client,
+				});
+				const totalPoints = pointsData.reduce(
+					(acc, curr) => acc + curr.points,
+					0
+				);
+				console.log(totalPoints);
+				const id = order.client;
+				await Client.findByIdAndUpdate(id, { points: totalPoints });
+			} */
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				data: {
+					order,
+				},
 			});
-			const totalPoints = pointsData.reduce(
-				(acc, curr) => acc + curr.points,
-				0
-			);
-			console.log(totalPoints);
-			const id = order.client;
-			await Client.findByIdAndUpdate(id, { points: totalPoints });
-		} */
+		}
+
+		const order = await Order.findByIdAndUpdate(id, data, { new: true });
 
 		return res.status(200).json({
 			ok: true,
