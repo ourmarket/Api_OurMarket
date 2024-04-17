@@ -15,3 +15,5 @@ router.delete('/:id', deleteBuy);
 router.delete('/:id', deleteCashierSessionValidation, deleteCashierSession); */
 
 module.exports = router;
+
+/* TODO agregar validaciones */

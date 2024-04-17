@@ -1,10 +1,15 @@
 /* eslint-disable eqeqeq */
 const { response } = require('express');
-const { Product, Ofert } = require('../models');
+const { Product, Ofert, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
+const { ObjectId } = require('mongodb');
 
 const getProducts = async (req, res = response) => {
+	// ?stock=
+	// 0= normal
+	// 1= stock: number
+	// 2= stock: [{data}]
 	try {
 		const jwt =
 			req.cookies.jwt_dashboard ||
@@ -12,8 +17,200 @@ const getProducts = async (req, res = response) => {
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
-		const { limit = 100000, from = 0 } = req.query;
+		const { limit = 100000, from = 0, stock = 0 } = req.query;
 		const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const notShow = { brand: 0, description: 0, __v: 0, user: 0 };
+
+		if (+stock === 1) {
+			const [total, products] = await Promise.all([
+				Product.countDocuments(query),
+				Product.find(query)
+					.populate('user', 'name')
+					.populate('category', 'name')
+					.skip(Number(from))
+					.limit(Number(limit))
+					.sort({ name: 1 }),
+			]);
+
+			const stocks = await Stock.aggregate([
+				{
+					$match: {
+						state: true,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						stock: {
+							$gt: 0,
+						},
+					},
+				},
+				{
+					$lookup: {
+						from: 'products',
+						localField: 'product',
+						foreignField: '_id',
+						as: 'product',
+					},
+				},
+				{
+					$unwind: {
+						path: '$product',
+					},
+				},
+				{
+					$group: {
+						_id: {
+							name: '$product.name',
+							img: '$product.img',
+							cost: '$unityCost',
+						},
+						actualStock: {
+							$sum: '$stock',
+						},
+						quantityBuy: {
+							$sum: '$quantity',
+						},
+					},
+				},
+				{
+					$project: {
+						_id: 0,
+						name: '$_id.name',
+						img: '$_id.img',
+						cost: '$_id.cost',
+						actualStock: 1,
+						quantityBuy: 1,
+					},
+				},
+				{
+					$sort: {
+						name: 1,
+					},
+				},
+			]);
+
+			const totalStockByProduct = await Stock.aggregate([
+				{
+					$match: {
+						state: true,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						stock: {
+							$gt: 0,
+						},
+					},
+				},
+				{
+					$lookup: {
+						from: 'products',
+						localField: 'product',
+						foreignField: '_id',
+						as: 'product',
+					},
+				},
+				{
+					$unwind: {
+						path: '$product',
+					},
+				},
+				{
+					$group: {
+						_id: {
+							productId: '$product._id',
+							name: '$product.name',
+							img: '$product.img',
+						},
+						actualStock: {
+							$sum: '$stock',
+						},
+						quantityBuy: {
+							$sum: '$quantity',
+						},
+					},
+				},
+				{
+					$project: {
+						_id: 0,
+						productId: '$_id.productId',
+						name: '$_id.name',
+						img: '$_id.img',
+						actualStock: 1,
+						quantityBuy: 1,
+					},
+				},
+				{
+					$sort: {
+						name: 1,
+					},
+				},
+			]);
+			const productsWithStock = products.map((product) => {
+				const stockEntry = totalStockByProduct.find(
+					(stock) => stock.productId.toString() === product._id.toString()
+				);
+
+				if (stockEntry) {
+					return {
+						...product._doc,
+						stock: stockEntry.actualStock,
+					};
+				} else {
+					return { ...product._doc, stock: 0 };
+				}
+			});
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				total,
+				products: productsWithStock,
+				stocks,
+			});
+		}
+		if (+stock === 2) {
+			const [total, products, stocks] = await Promise.all([
+				Product.countDocuments(query),
+				Product.find(query, notShow)
+					.populate('category', 'name')
+					.skip(Number(from))
+					.limit(Number(limit))
+					.sort({ name: 1 }),
+				Stock.find(
+					{
+						state: true,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						stock: {
+							$gt: 0,
+						},
+					},
+					{ _id: 1, product: 1, quantity: 1, cost: 1, unityCost: 1, stock: 1 }
+				),
+			]);
+
+			const productStock = products.map((prod) => {
+				const matchingStock = stocks.filter((item) => {
+					return item.product.toString() === prod._id.toString();
+				});
+
+				if (matchingStock.length > 0) {
+					return {
+						...prod._doc,
+						stock: matchingStock.map((item) => ({
+							...item._doc,
+						})),
+					};
+				} else {
+					return {
+						...prod._doc,
+						stock: [],
+					};
+				}
+			});
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				total,
+				products: productStock,
+			});
+		}
 
 		const [total, products] = await Promise.all([
 			Product.countDocuments(query),
@@ -519,6 +716,7 @@ const deleteOldStock = async (req, res = response) => {
 module.exports = {
 	postProduct,
 	getProducts,
+
 	getProduct,
 	putProduct,
 	deleteProduct,

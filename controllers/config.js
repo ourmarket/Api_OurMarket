@@ -2,6 +2,7 @@ const { response } = require('express');
 const { Config, Order, Client } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
+const { ObjectId } = require('mongodb');
 
 const getConfig = async (req, res = response) => {
 	try {
@@ -135,14 +136,21 @@ const setConfigActiveClient = async (req, res = response) => {
 		const config = await Config.find({
 			superUser: tokenData.UserInfo.superUser,
 		});
+
+		console.log(
+			new Date(
+				new Date().setDate(new Date().getDate() - config[0].inactiveDays)
+			)
+		);
+
 		const lastOrders = await Order.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: tokenData.UserInfo.superUser,
+					superUser: new ObjectId(tokenData.UserInfo.superUser),
 					deliveryDate: {
 						$gte: new Date(
-							new Date().setDate(new Date().getDate() - config.inactiveDays)
+							new Date().setDate(new Date().getDate() - config[0].inactiveDays)
 						),
 					},
 				},

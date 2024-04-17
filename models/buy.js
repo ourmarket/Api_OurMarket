@@ -20,6 +20,7 @@ const BuySchema = Schema(
 					ref: 'Product',
 					required: true,
 				},
+				stockId: { type: String },
 				name: { type: String },
 				img: { type: String },
 

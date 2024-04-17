@@ -1,25 +1,7 @@
 const { response } = require('express');
-const { Buy, Product } = require('../models');
+const { Buy, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
-
-// recibe TODO el stock por parámetro y el nuevo stock
-
-const addStock = (stocks, newStock) => {
-	const index = stocks.findIndex(
-		(product) => product.unityCost === newStock.unityCost
-	);
-
-	if (index !== -1) {
-		stocks[index].quantity += newStock.quantity;
-		stocks[index].stock += newStock.stock;
-		stocks[index].updateStock = new Date();
-	} else {
-		stocks.push(newStock);
-	}
-
-	return stocks;
-};
 
 const getBuys = async (req, res = response) => {
 	try {
@@ -76,6 +58,7 @@ const getBuy = async (req, res = response) => {
 	}
 };
 
+// ✔
 const postBuy = async (req, res = response) => {
 	try {
 		const { state, products, ...body } = req.body;
@@ -92,36 +75,30 @@ const postBuy = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		};
 
+		const buy = new Buy(data);
+
 		// agregar STOCK
 
 		for (let i = 0; i < products.length; i++) {
 			const id = products[i].productId;
-			const product = await Product.findById(id);
-
-			const stocks = product.stock;
 
 			const newStock = {
-				productId: id,
-				name: product.name,
-				img: product.img,
+				stockId: products[i].stockId,
+				buy: buy._id,
+				product: id,
 				quantity: products[i].quantity,
 				cost: products[i].totalCost,
 				unityCost: products[i].unitCost,
 				stock: products[i].quantity,
 				createdStock: new Date(),
 				updateStock: null,
+				superUser: tokenData.UserInfo.superUser,
 			};
+			const stock = new Stock(newStock);
+			// Guardar DB
 
-			const addStockNew = addStock(stocks, newStock);
-
-			await Product.findByIdAndUpdate(
-				id,
-				{ stock: addStockNew },
-				{ new: true }
-			);
+			await stock.save();
 		}
-
-		const buy = new Buy(data);
 
 		// Guardar DB
 		await buy.save();
@@ -143,15 +120,20 @@ const postBuy = async (req, res = response) => {
 	}
 };
 
+// ✔
 const deleteBuy = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+
+		const buy = id;
+
 		await Buy.findByIdAndUpdate(id, { state: false }, { new: true });
+		await Stock.findOneAndUpdate(buy, { state: false }, { new: true });
 
 		return res.status(200).json({
 			ok: true,
 			status: 200,
-			msg: 'Compra borrada',
+			msg: 'Compra y stock borrado',
 		});
 	} catch (error) {
 		logger.error(error);

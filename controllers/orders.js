@@ -1,5 +1,5 @@
 const { response } = require('express');
-const { Order, Points, Client } = require('../models');
+const { Order, Points, Client, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
@@ -162,6 +162,41 @@ const getOrdersPaginate = async (req, res = response) => {
 const getOrder = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+		const { stock } = req.query;
+
+		if (+stock === 1) {
+			const order = await Order.findById(id)
+				.populate('deliveryTruck')
+				.populate('employee')
+				.populate('deliveryZone');
+
+			const availableStock = [];
+			const modifyStock = [];
+
+			for (let i = 0; i < order.orderItems.length; i++) {
+				const stock = await Stock.find({
+					state: true,
+					product: order.orderItems[i].productId,
+					stock: {
+						$gt: 0,
+					},
+				});
+				availableStock.push({
+					product: order.orderItems[i].productId,
+					stock,
+					modifyStock,
+				});
+			}
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				data: {
+					order,
+					stock: availableStock,
+				},
+			});
+		}
 		const order = await Order.findById(id)
 			.populate('deliveryTruck')
 			.populate('employee')
@@ -183,10 +218,10 @@ const getOrder = async (req, res = response) => {
 		});
 	}
 };
-
+// ✔
 const postOrder = async (req, res = response) => {
 	try {
-		const { state, paid, subTotal, client, ...body } = req.body;
+		const { state, paid, subTotal, client, orderItems, ...body } = req.body;
 		const jwt =
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
@@ -195,6 +230,7 @@ const postOrder = async (req, res = response) => {
 
 		const data = {
 			...body,
+			orderItems,
 			paid,
 			subTotal,
 			client,
@@ -202,7 +238,19 @@ const postOrder = async (req, res = response) => {
 		};
 
 		const order = new Order(data);
+		// 1. Restar stock
 
+		for (let i = 0; i < orderItems.length; i++) {
+			for (let x = 0; x < orderItems[i].stockData.length; x++) {
+				const stockId = orderItems[i].stockData[x].stockId;
+				const newStock = orderItems[i].stockData[x].quantityNew;
+
+				const res = await Stock.findByIdAndUpdate(stockId, { stock: newStock });
+				console.log(res);
+			}
+		}
+
+		// 2. Puntos
 		// Si esta paga se cargan los puntos
 		if (paid) {
 			const dataPoints = {
@@ -223,7 +271,7 @@ const postOrder = async (req, res = response) => {
 				(acc, curr) => acc + curr.points,
 				0
 			);
-			console.log(totalPoints);
+
 			await Client.findByIdAndUpdate(client, { points: totalPoints });
 		}
 
@@ -252,16 +300,35 @@ const putOrder = async (req, res = response) => {
 		const { id } = req.params;
 		const { state, ...data } = req.body;
 
-		const jwt =
+		/* 		const jwt =
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		const tokenData = getTokenData(jwt); */
 
-		const order = await Order.findByIdAndUpdate(id, data);
+		for (let i = 0; i < data.orderItems.length; i++) {
+			for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
+				const stockId = data.orderItems[i].stockData[x].stockId;
+				const newStock = data.orderItems[i].stockData[x].quantityNew;
+
+				const res = await Stock.findByIdAndUpdate(stockId, { stock: newStock });
+				console.log(res);
+			}
+		}
+
+		// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
+		const filterEmptyProducts = data.orderItems.filter(
+			(product) => product.totalQuantity
+		);
+		const dataFilter = {
+			...data,
+			orderItems: filterEmptyProducts,
+		};
+
+		const order = await Order.findByIdAndUpdate(id, dataFilter);
 
 		// Si estaba impaga y paso a estar paga
-		if (order.paid === false && req.body.paid === true) {
+		/* if (order.paid === false && req.body.paid === true) {
 			const dataPoints = {
 				clientId: order.client,
 				points: Math.trunc(order.subTotal),
@@ -286,9 +353,9 @@ const putOrder = async (req, res = response) => {
 			console.log(totalPoints);
 			const id = order.client;
 			await Client.findByIdAndUpdate(id, { points: totalPoints });
-		}
+		} */
 
-		res.status(200).json({
+		return res.status(200).json({
 			ok: true,
 			status: 200,
 			data: {
@@ -305,8 +372,10 @@ const putOrder = async (req, res = response) => {
 	}
 };
 
+// ✔
 const deleteOrder = async (req, res = response) => {
 	try {
+		// 1. Borramos la orden
 		const { id } = req.params;
 		const order = await Order.findByIdAndUpdate(
 			id,
@@ -314,7 +383,29 @@ const deleteOrder = async (req, res = response) => {
 			{ new: true }
 		);
 
-		// Si esta paga se cargan los puntos
+		const orderItems = order?.orderItems;
+
+		// 2. Devolvemos el stock de todos los productos
+		for (let i = 0; i < orderItems.length; i++) {
+			if (orderItems[i].stockData) {
+				for (let x = 0; x < orderItems[i].stockData.length; x++) {
+					const stockId = orderItems[i].stockData[x].stockId;
+
+					const stock = await Stock.findById(stockId);
+
+					const newStock =
+						stock.stock + orderItems[i].stockData[x].quantityModify;
+
+					await Stock.findByIdAndUpdate(
+						stockId,
+						{ stock: newStock },
+						{ new: true }
+					);
+				}
+			}
+		}
+
+		/* // Si esta paga se cargan los puntos
 		if (order.paid) {
 			await Points.findOneAndUpdate(
 				{ orderId: order._id },
@@ -334,11 +425,12 @@ const deleteOrder = async (req, res = response) => {
 			console.log(totalPoints);
 			const id = order.client;
 			await Client.findByIdAndUpdate(id, { points: totalPoints });
-		}
+		} */
 
 		res.status(200).json({
 			ok: true,
 			status: 200,
+			msg: 'Orden eliminada',
 		});
 	} catch (error) {
 		logger.error(error);
@@ -575,7 +667,7 @@ const getClientOrderDebt = async (req, res = response) => {
 		});
 	}
 };
-
+// ✔
 const getOrdersCashier = async (req, res = response) => {
 	try {
 		const jwt =
@@ -592,11 +684,41 @@ const getOrdersCashier = async (req, res = response) => {
 			.populate('userId')
 			.populate('client');
 
+		const ordersWithStockAvailable = [];
+
+		for (let i = 0; i < orders.length; i++) {
+			const order = orders[i];
+
+			const orderItemsWithStock = [];
+
+			for (let x = 0; x < order.orderItems.length; x++) {
+				const product = order.orderItems[x];
+
+				const stock = await Stock.find({
+					state: true,
+					product: product.productId,
+					stock: {
+						$gt: 0,
+					},
+				});
+
+				orderItemsWithStock.push({
+					...product._doc,
+					stockAvailable: stock,
+				});
+			}
+
+			ordersWithStockAvailable.push({
+				...order._doc,
+				orderItems: orderItemsWithStock,
+			});
+		}
+
 		res.status(200).json({
 			ok: true,
 			status: 200,
 			data: {
-				orders,
+				orders: ordersWithStockAvailable,
 			},
 		});
 	} catch (error) {

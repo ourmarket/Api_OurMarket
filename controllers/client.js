@@ -411,6 +411,35 @@ const deleteSimpleClient = async (req, res = response) => {
 		});
 	}
 };
+const getClientQuantity = async (req, res = response) => {
+	try {
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
+		const tokenData = getTokenData(jwt);
+
+		const clients = await Client.find({
+			state: true,
+			superUser: tokenData.UserInfo.superUser,
+		});
+
+		return res.status(200).json({
+			ok: true,
+			status: 200,
+			total: clients.length,
+			active: clients.filter((client) => client.active).length,
+			inactive: clients.filter((client) => !client.active).length,
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
 
 module.exports = {
 	postClient,
@@ -422,4 +451,5 @@ module.exports = {
 	getAddressesClient,
 	postSimpleClient,
 	deleteSimpleClient,
+	getClientQuantity,
 };

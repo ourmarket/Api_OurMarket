@@ -27,6 +27,7 @@ const Expenses = require('./expenses');
 const SuperUser = require('./superUser');
 const CashierSession = require('./cashierSession');
 const Buy = require('./buy');
+const Stock = require('./stock');
 
 module.exports = {
 	Category,
@@ -57,4 +58,5 @@ module.exports = {
 	SuperUser,
 	CashierSession,
 	Buy,
+	Stock,
 };

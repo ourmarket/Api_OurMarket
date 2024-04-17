@@ -27,6 +27,16 @@ const OrderSchema = new Schema(
 				unitPrice: { type: Number, required: true },
 				unitCost: { type: Number },
 				stockId: { type: String },
+				stockData: [
+					{
+						stockId: { type: String },
+						quantityOriginal: { type: Number },
+						quantityNew: { type: Number },
+						quantityModify: { type: Number },
+						unitCost: { type: Number },
+						dateStock: { type: Date },
+					},
+				],
 			},
 		],
 
@@ -53,7 +63,7 @@ const OrderSchema = new Schema(
 		subTotal: { type: Number, required: true },
 		total: { type: Number, required: true },
 
-		status: { type: String, default: 'Pendiente' },
+		status: { type: String, default: 'Pendiente' }, // [ Pendiente, Entregado, Rechazado]
 		active: { type: Boolean, default: false },
 
 		commentary: { type: String },

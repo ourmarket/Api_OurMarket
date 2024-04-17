@@ -15,7 +15,7 @@ const {
 	reportTotalStock,
 	reportTotalClientDebt,
 	reportTotalClientBuyByRangeDays,
-	reportTotalClientBuyAll,
+
 	reportTotalClientBuyIndividual,
 	reportTotalClientBuyIndividualByDay,
 	reportTotalIndividualProduct,
@@ -29,7 +29,15 @@ const { deliveryOrders } = require('../controllers/reports/deliveryReport');
 const {
 	getTotalExpensesReport,
 	getByMonthExpensesReport,
+	getByMonthAndCategoryExpensesReport,
+	getTotalCategoryExpensesReport,
 } = require('../controllers/reports/expensesReport');
+const {
+	paymentByLastXdayReport,
+} = require('../controllers/reports/paymentsReport');
+const {
+	totalPaymentByClientReport,
+} = require('../controllers/reports/clientsReport');
 
 const router = Router();
 
@@ -68,7 +76,7 @@ router.post('/reportTotalSellByRangeDay', reportTotalSellByRangeDay);
 router.get('/reportTotalStock', reportTotalStock);
 // clients
 router.get('/reportTotalClientDebt', reportTotalClientDebt);
-router.get('/reportTotalClientBuy', reportTotalClientBuyAll); // from 21/03/2023
+router.get('/reportTotalClientBuy', totalPaymentByClientReport); // from 21/03/2023
 router.get('/reportTotalClientBuy/:id', reportTotalClientBuyIndividual); // from 21/03/2023
 router.post(
 	'/reportTotalClientBuyByRangeDays',
@@ -85,5 +93,13 @@ router.post('/deliveryOrders/:id', deliveryOrders);
 // expenses
 router.get('/reportTotalExpenses', getTotalExpensesReport);
 router.get('/reportTotalExpensesByMonth', getByMonthExpensesReport);
+router.get(
+	'/reportTotalExpensesByMonthAndCategory',
+	getByMonthAndCategoryExpensesReport
+);
+router.get('/reportTotalExpensesByCategory', getTotalCategoryExpensesReport);
+
+// payment
+router.get('/paymentByLastXdayReport', paymentByLastXdayReport);
 
 module.exports = router;

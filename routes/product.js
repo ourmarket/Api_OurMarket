@@ -19,6 +19,7 @@ const { Router } = require('express');
 const router = Router();
 
 router.get('/', getProducts);
+
 router.get('/deleteOldStock', deleteOldStock);
 router.get('/:id', getProductValidator, getProduct);
 router.get('/ofert/:id', getOfertByProductId);

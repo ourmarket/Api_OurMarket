@@ -9,6 +9,7 @@ const {
 	getAddressesClient,
 	postSimpleClient,
 	deleteSimpleClient,
+	getClientQuantity,
 } = require('../controllers/client');
 const {
 	getClientValidator,
@@ -26,6 +27,7 @@ const router = Router();
 
 //  Obtener todas las Clientes - publico
 router.get('/', getClients);
+router.get('/quantity', getClientQuantity);
 // cambiar los clientes a activos si compraron en los ultimos 30 dias
 // router.get('/setActiveClients', activeClient)
 

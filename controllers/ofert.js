@@ -1,15 +1,80 @@
 const { response } = require('express');
-const { Ofert } = require('../models');
+const { Ofert, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
+const { ObjectId } = require('mongodb');
 
 const getOferts = async (req, res = response) => {
+	// ?stock=
+	// 0= normal
+	// 1= stock=[{data}]
 	try {
+		const { stock = 0, limit = 1000000, from = 0 } = req.query;
 		const jwt =
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (+stock === 1) {
+			const query = { state: true, superUser: tokenData.UserInfo.superUser };
+			const notShow = { prices: 0, quantities: 0, __v: 0, superUser: 0 };
+			const [total, oferts, stocks] = await Promise.all([
+				Ofert.countDocuments(query),
+				Ofert.find(query, notShow)
+					.populate('product', ['name', 'unit', 'img', 'category', 'type'])
+					.skip(Number(from))
+					.limit(Number(limit))
+					.sort({ name: 1 }),
+				Stock.find(
+					{
+						state: true,
+						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						stock: {
+							$gt: 0,
+						},
+					},
+					{
+						_id: 1,
+						product: 1,
+						quantity: 1,
+						cost: 1,
+						unityCost: 1,
+						stock: 1,
+						createdAt: 1,
+					}
+				),
+			]);
+
+			const ofertWithStock = oferts.map((ofert) => {
+				const matchingStock = stocks.filter((item) => {
+					return item.product.toString() === ofert.product._id.toString();
+				});
+
+				if (matchingStock.length > 0) {
+					return {
+						...ofert._doc,
+						stock: matchingStock.map((item) => ({
+							...item._doc,
+						})),
+					};
+				} else {
+					return {
+						...ofert._doc,
+						stock: [],
+					};
+				}
+			});
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				total,
+				data: {
+					oferts: ofertWithStock,
+				},
+			});
+		}
 
 		const oferts = await Ofert.find({
 			state: true,

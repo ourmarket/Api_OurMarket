@@ -122,6 +122,7 @@ app.use('/api/superUser', require('./routes/superUser'));
 app.use('/api/cashierSession', require('./routes/cashierSession'));
 
 app.use('/api/buy', require('./routes/buy'));
+app.use('/api/stock', require('./routes/stock'));
 
 // -----------error----------------
 app.use(
