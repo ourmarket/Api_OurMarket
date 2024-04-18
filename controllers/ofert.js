@@ -25,7 +25,7 @@ const getOferts = async (req, res = response) => {
 					.populate('product', ['name', 'unit', 'img', 'category', 'type'])
 					.skip(Number(from))
 					.limit(Number(limit))
-					.sort({ name: 1 }),
+					.sort({ description: 1 }),
 				Stock.find(
 					{
 						state: true,
@@ -111,8 +111,52 @@ const getOferts = async (req, res = response) => {
 };
 
 const getOfert = async (req, res = response) => {
+	// ?stock=
+	// 0= normal
+	// 1= stock=[{data}]
 	try {
 		const { id } = req.params;
+		const { stock = 0 } = req.query;
+
+		if (+stock === 1) {
+			const notShow = { prices: 0, quantities: 0, __v: 0, superUser: 0 };
+
+			const ofert = await Ofert.findById(id, notShow).populate('product', [
+				'name',
+				'unit',
+				'img',
+				'category',
+				'type',
+			]);
+			const stock = await Stock.find(
+				{
+					state: true,
+					stock: {
+						$gt: 0,
+					},
+					product: ofert.product._id,
+				},
+				{
+					_id: 1,
+					product: 1,
+					quantity: 1,
+					cost: 1,
+					unityCost: 1,
+					stock: 1,
+					createdAt: 1,
+				}
+			);
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				data: {
+					ofert,
+					stock,
+				},
+			});
+		}
+
 		const ofert = await Ofert.findById(id).populate('product', [
 			'name',
 			'description',
@@ -121,7 +165,6 @@ const getOfert = async (req, res = response) => {
 			'brand',
 			'category',
 			'type',
-			'stock',
 		]);
 
 		res.status(200).json({

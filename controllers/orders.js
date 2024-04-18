@@ -1,5 +1,5 @@
 const { response } = require('express');
-const { Order, Points, Client, Stock } = require('../models');
+const { Order, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
@@ -252,7 +252,7 @@ const postOrder = async (req, res = response) => {
 
 		// 2. Puntos
 		// Si esta paga se cargan los puntos
-		if (paid) {
+		/* 	if (paid) {
 			const dataPoints = {
 				clientId: client,
 				points: Math.trunc(subTotal),
@@ -273,7 +273,7 @@ const postOrder = async (req, res = response) => {
 			);
 
 			await Client.findByIdAndUpdate(client, { points: totalPoints });
-		}
+		} */
 
 		// Guardar DB
 		await order.save();
