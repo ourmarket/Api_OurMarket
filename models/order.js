@@ -26,7 +26,7 @@ const OrderSchema = new Schema(
 				totalPrice: { type: Number, required: true },
 				unitPrice: { type: Number, required: true },
 				unitCost: { type: Number },
-				stockId: { type: String },
+				stockId: { type: String, default: null },
 				stockData: [
 					{
 						stockId: { type: String },

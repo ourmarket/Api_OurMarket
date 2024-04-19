@@ -2,6 +2,10 @@ const { response } = require('express');
 const { Order, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
+const {
+	updateStockFunction,
+	calculateAverageUnityCost,
+} = require('../helpers/adjustStock');
 
 const getOrders = async (req, res = response) => {
 	try {
@@ -228,6 +232,105 @@ const postOrder = async (req, res = response) => {
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
+		// 1. Restar stock
+
+		const orderItemsEdit = [];
+		for (let i = 0; i < orderItems.length; i++) {
+			// 1-1 Buscar stock de cada producto
+			const stock = await Stock.find(
+				{
+					state: true,
+					stock: {
+						$gt: 0,
+					},
+					product: orderItems[i].productId,
+				},
+				{
+					_id: 1,
+					product: 1,
+					quantity: 1,
+					cost: 1,
+					unityCost: 1,
+					stock: 1,
+					createdAt: 1,
+				}
+			).sort({ createdAt: 1 });
+
+			const stockAvailable = [...stock];
+
+			// 1-2 Ajusto el stock en forma de pila descendente por fecha de creación
+			const actualStock = await updateStockFunction(
+				stockAvailable,
+				orderItems[i].totalQuantity
+			);
+
+			// 1-3 Modifico en Bd de Stock
+
+			for (let x = 0; x < actualStock.length; x++) {
+				const stockId = actualStock[x]._id;
+				const newStock = actualStock[x].stock;
+
+				await Stock.findByIdAndUpdate(stockId, { stock: newStock });
+			}
+
+			// 1-4 Genero el stockData
+
+			const stockData = actualStock.map((item) => ({
+				stockId: item._id,
+				quantityOriginal: item.quantity,
+				quantityNew: item.stock,
+				quantityModify: item.modify,
+				unitCost: item.unityCost,
+				dateStock: item.createdAt,
+			}));
+
+			// 1-5 Regenero el ordenItem y calculo el costo
+
+			orderItemsEdit.push({
+				...orderItems[i],
+				stockData,
+				unitCost: calculateAverageUnityCost(actualStock),
+			});
+		}
+
+		// 2. Guardar la orden en DB
+		const data = {
+			...body,
+			orderItems: orderItemsEdit,
+			paid,
+			subTotal,
+			client,
+			superUser: tokenData.UserInfo.superUser,
+		};
+
+		const order = new Order(data);
+		await order.save();
+
+		res.status(200).json({
+			ok: true,
+			status: 200,
+			data: {
+				order,
+			},
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+/* const postOrder = async (req, res = response) => {
+	try {
+		const { state, paid, subTotal, client, orderItems, ...body } = req.body;
+		const jwt =
+			req.cookies.jwt_dashboard ||
+			req.cookies.jwt_tpv ||
+			req.cookies.jwt_deliveryApp;
+		const tokenData = getTokenData(jwt);
+
 		const data = {
 			...body,
 			orderItems,
@@ -273,7 +376,7 @@ const postOrder = async (req, res = response) => {
 			);
 
 			await Client.findByIdAndUpdate(client, { points: totalPoints });
-		} */
+		} 
 
 		// Guardar DB
 		await order.save();
@@ -293,7 +396,7 @@ const postOrder = async (req, res = response) => {
 			msg: error.message,
 		});
 	}
-};
+}; */
 
 const putOrder = async (req, res = response) => {
 	try {
