@@ -350,6 +350,79 @@ const ofertsWithCategory = async (req, res = response) => {
 		});
 	}
 };
+const ofertsWithCategoryById = async (req, res = response) => {
+	const { id } = req.params;
+	try {
+		const allOferts = await Ofert.aggregate([
+			{
+				$match: {
+					state: true,
+				},
+			},
+			{
+				$lookup: {
+					from: 'products',
+					localField: 'product',
+					foreignField: '_id',
+					as: 'product',
+				},
+			},
+			{
+				$unwind: {
+					path: '$product',
+				},
+			},
+			{
+				$project: {
+					_id: '$_id',
+					description: '$description',
+					productId: '$product._id',
+					name: '$product.name',
+					img: '$product.img',
+					category: '$product.category',
+					basePrice: '$basePrice',
+					retailPrice: '$retailPrice',
+				},
+			},
+			{
+				$match: {
+					category: new ObjectId(id),
+				},
+			},
+		]);
+
+		const ofertsWithStock = [];
+
+		for (let i = 0; i < allOferts.length; i++) {
+			const ofert = allOferts[i];
+			const stock = await Stock.find({
+				product: ofert.productId,
+				stock: {
+					$gt: 0,
+				},
+			});
+			const ofertStock = {
+				...allOferts[i],
+				stock,
+			};
+			ofertsWithStock.push(ofertStock);
+		}
+		res.status(200).json({
+			ok: true,
+			status: 200,
+			data: {
+				oferts: ofertsWithStock.filter((item) => item.stock.length > 0),
+			},
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
 
 module.exports = {
 	postOfert,
@@ -359,4 +432,5 @@ module.exports = {
 	putOfert,
 	deleteOfert,
 	ofertsWithCategory,
+	ofertsWithCategoryById,
 };

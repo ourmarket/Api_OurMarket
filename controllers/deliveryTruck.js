@@ -16,9 +16,7 @@ const getDeliveryTrucks = async (req, res = response) => {
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
 		})
-			.populate('distributor')
-			.populate('user')
-			.populate('defaultZone');
+		.populate('user', ['name', 'lastName', 'phone', 'email']);
 
 		return res.status(200).json({
 			ok: true,

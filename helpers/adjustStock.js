@@ -143,7 +143,6 @@ function calculateAverageUnityCost(stockArray) {
 }
 
 function sortByCreatedAt(arr) {
-	console.log(arr);
 	return arr
 		.slice()
 		.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -170,7 +169,45 @@ function updateStockFunction(stock, rest) {
 		stockUpdate[i] = item; // Reemplazar el objeto original con la copia modificada
 	}
 
-	return stockUpdate;
+	return stockUpdate.filter((item) => item.modify);
+}
+
+function compareOrderItems(oldItems, newItems) {
+	/* 
+Recibe como parámetro orderItems anterior y modificado
+Ej de retorno:
+[
+  { productId: '10', quantityDifference: 2, oldQuantity: 3 },
+  { productId: '11', quantityDifference: -9, oldQuantity: 9 }
+]
+*/
+
+	const modifiedItems = [];
+
+	// Iterar sobre los elementos de oldItems
+	oldItems.forEach((oldItem) => {
+		// Buscar el elemento correspondiente en newItems
+		const newItem = newItems.find(
+			(item) => item.productId.toString() === oldItem.productId.toString()
+		);
+
+		// Si se encuentra el elemento correspondiente
+		if (newItem) {
+			// Calcular la diferencia en la cantidad
+			const quantityDifference = newItem.totalQuantity - oldItem.totalQuantity;
+
+			// Si la cantidad ha cambiado, añadir a modifiedItems
+			if (quantityDifference !== 0) {
+				modifiedItems.push({
+					productId: oldItem.productId,
+					quantityDifference,
+					originalUnitCost: oldItem.unitCost,
+				});
+			}
+		}
+	});
+
+	return modifiedItems;
 }
 
 module.exports = {
@@ -179,4 +216,5 @@ module.exports = {
 	mergeArrays,
 	calculateAverageUnityCost,
 	updateStockFunction,
+	compareOrderItems,
 };

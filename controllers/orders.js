@@ -1,10 +1,13 @@
 const { response } = require('express');
 const { Order, Stock } = require('../models');
 const { getTokenData } = require('../helpers');
-const { logger } = require('../helpers/logger');
+const { logger, controllerLogger } = require('../helpers/logger');
 const {
 	updateStockFunction,
 	calculateAverageUnityCost,
+
+	adjustStock,
+	mergeArrays,
 } = require('../helpers/adjustStock');
 
 const getOrders = async (req, res = response) => {
@@ -403,6 +406,206 @@ const putOrder = async (req, res = response) => {
 		const { id } = req.params;
 		const { state, ...data } = req.body;
 
+		controllerLogger.info(
+			`>>>>>>>>>>>>>>>>>> Orden Id: ${id} <<<<<<<<<<<<<<<<<<<<<`
+		);
+
+		// 1. Si hay cambios en los productos
+		if (data?.orderItems) {
+			// 1.1 Comparar orden anterior y la modificada
+			const oldOrder = await Order.findById(id);
+			const modifyOrder = {
+				...data,
+			};
+
+			const orderItemsUpdate = [];
+
+			for (let i = 0; i < modifyOrder.orderItems.length; i++) {
+				// 1-1 Buscar stock de cada producto
+
+				const stock = await Stock.find(
+					{
+						state: true,
+						stock: {
+							$gt: 0,
+						},
+						product: modifyOrder.orderItems[i].productId,
+					},
+					{
+						_id: 1,
+						product: 1,
+						quantity: 1,
+						cost: 1,
+						unityCost: 1,
+						stock: 1,
+						createdAt: 1,
+					}
+				).sort({ createdAt: 1 });
+
+				// 1-2 Obtener los dato para re-calcular el stock
+				const stockAvailable = stock.map((item) => ({
+					dateStock: item.createdAt,
+					quantity: item.quantity,
+					stock: item.stock,
+					stockId: item._id.toString(),
+					unitCost: item.unityCost,
+				}));
+
+				const oldOrderItem = oldOrder.orderItems.find(
+					(product) =>
+						product.productId.toString() ===
+						modifyOrder.orderItems[i].productId.toString()
+				);
+
+				const originalTotalQuantity = oldOrderItem.totalQuantity;
+				const originalUnitCost = oldOrderItem.unitCost;
+				const newTotalQuantity = modifyOrder.orderItems[i].totalQuantity;
+				const stockData = oldOrderItem.stockData.map((item) => ({
+					dateStock: item.dateStock,
+					quantity: item.quantityOriginal,
+					stock:
+						stockAvailable.find(
+							(stockAvailable) =>
+								stockAvailable.stockId.toString() === item.stockId.toString()
+						)?.stock || 0, // solo compara con stock existentes, si no lo encuentra es 0
+					stockId: item.stockId.toString(), // lo convierto a string para evitar problemas en adjustStock
+					unitCost: item.unitCost,
+					modify: item.quantityModify || 0,
+				}));
+
+				// 1-3 Aplicamos el algoritmo de ajuste
+				const adjustStockData = adjustStock(
+					originalTotalQuantity,
+					newTotalQuantity,
+					stockAvailable,
+					stockData,
+					originalUnitCost
+				);
+
+				// 1-4 Obtenemos el stock modificado
+				const allStockData =
+					originalTotalQuantity > newTotalQuantity
+						? adjustStockData.modifyStock
+						: mergeArrays(
+								adjustStockData.modifyStock,
+								adjustStockData.availableStock
+						  );
+
+				orderItemsUpdate.push({
+					...modifyOrder.orderItems[i],
+					unitCost: adjustStockData.unitCost,
+					stockData: allStockData
+						.filter((item) => item.modify && item.modify > 0)
+						.map((stock) => ({
+							stockId: stock.stockId,
+							unitCost: stock.unitCost,
+							quantityOriginal: stock.quantity,
+							quantityNew: stock.stock,
+							quantityModify: stock.modify,
+							dateStock: stock.dateStock,
+						})),
+				});
+
+				controllerLogger.info(
+					`------------------- Producto ${i + 1} -------------------`
+				);
+				controllerLogger.info({
+					id: modifyOrder.orderItems[i].productId,
+					product: modifyOrder.orderItems[i].productId,
+					newQuantity: newTotalQuantity,
+					oldQuantity: originalTotalQuantity,
+					stockData,
+					adjustStockData,
+					allStockData,
+				});
+
+				// 1-5 Actualizar stock en DB
+				for (let x = 0; x < allStockData.length; x++) {
+					const stockData = allStockData[x];
+					controllerLogger.info(
+						`----------------Stock Modificado ${x + 1} ---------------`
+					);
+					controllerLogger.info({
+						stockId: stockData.stockId,
+						newValue: stockData.stock,
+					});
+
+					await Stock.findByIdAndUpdate(stockData.stockId, {
+						stock: stockData.stock,
+					});
+				}
+			}
+			// 2 Actualizo la orden en DB
+
+			const dataUpdate = {
+				...data,
+				orderItems: orderItemsUpdate.filter((item) => item.totalQuantity > 0), // Borro los productos con cantidad comprada en 0
+			};
+
+			const order = await Order.findByIdAndUpdate(id, dataUpdate, {
+				new: true,
+			});
+
+			/* for (let i = 0; i < data.orderItems.length; i++) {
+				for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
+					const stockId = data.orderItems[i].stockData[x].stockId;
+					const newStock = data.orderItems[i].stockData[x].quantityNew;
+
+					const res = await Stock.findByIdAndUpdate(stockId, {
+						stock: newStock,
+					});
+					console.log(res);
+				}
+			}
+
+			// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
+			const filterEmptyProducts = data.orderItems.filter(
+				(product) => product.totalQuantity
+			);
+			const dataFilter = {
+				...data,
+				orderItems: filterEmptyProducts,
+			};
+
+			const order = await Order.findByIdAndUpdate(id, dataFilter); */
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				data: {
+					order,
+				},
+			});
+		}
+		// --------------------------------------------------------------------
+		// 2. Si no hay cambio en los productos
+
+		// --------------------------------------------------------------------
+		// 3. Si no hay cambio en los productos
+		const order = await Order.findByIdAndUpdate(id, data, { new: true });
+
+		return res.status(200).json({
+			ok: true,
+			status: 200,
+			data: {
+				order,
+			},
+		});
+	} catch (error) {
+		console.log(error);
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+/* const putOrder = async (req, res = response) => {
+	try {
+		const { id } = req.params;
+		const { state, ...data } = req.body;
+
 		if (data?.orderItems) {
 			for (let i = 0; i < data.orderItems.length; i++) {
 				for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
@@ -453,7 +656,7 @@ const putOrder = async (req, res = response) => {
 				console.log(totalPoints);
 				const id = order.client;
 				await Client.findByIdAndUpdate(id, { points: totalPoints });
-			} */
+			} 
 
 			return res.status(200).json({
 				ok: true,
@@ -481,7 +684,7 @@ const putOrder = async (req, res = response) => {
 			msg: error.message,
 		});
 	}
-};
+}; */
 
 // ✔
 const deleteOrder = async (req, res = response) => {
@@ -496,47 +699,41 @@ const deleteOrder = async (req, res = response) => {
 
 		const orderItems = order?.orderItems;
 
+		controllerLogger.info(
+			`|||||||||||||||||||||||| DELETE Orden Id: ${id} |||||||||||||||||||||||||||||`
+		);
+		controllerLogger.info(`OrderItems`, orderItems);
+
 		// 2. Devolvemos el stock de todos los productos
 		for (let i = 0; i < orderItems.length; i++) {
+			controllerLogger.info(`----------------Product ${i}------------------`);
 			if (orderItems[i].stockData) {
 				for (let x = 0; x < orderItems[i].stockData.length; x++) {
-					const stockId = orderItems[i].stockData[x].stockId;
+					if (orderItems[i].stockData[x].quantityModify) {
+						const stockId = orderItems[i].stockData[x].stockId;
 
-					const stock = await Stock.findById(stockId);
+						const stock = await Stock.findById(stockId);
 
-					const newStock =
-						stock.stock + orderItems[i].stockData[x].quantityModify;
+						const newStock =
+							stock?.stock + orderItems[i]?.stockData[x]?.quantityModify;
 
-					await Stock.findByIdAndUpdate(
-						stockId,
-						{ stock: newStock },
-						{ new: true }
-					);
+						controllerLogger.info(
+							`----------------Stock ${x}------------------`
+						);
+						controllerLogger.info({
+							oldStock: stock?.stock,
+							stockReturn: orderItems[i]?.stockData[x]?.quantityModify,
+						});
+						controllerLogger.info(`stock`, stock._doc);
+						await Stock.findByIdAndUpdate(
+							stockId,
+							{ stock: newStock },
+							{ new: true }
+						);
+					}
 				}
 			}
 		}
-
-		/* // Si esta paga se cargan los puntos
-		if (order.paid) {
-			await Points.findOneAndUpdate(
-				{ orderId: order._id },
-				{ state: false },
-				{ new: true }
-			);
-
-			// actualizo puntos dentro de cliente
-			const pointsData = await Points.find({
-				state: true,
-				clientId: order.client,
-			});
-			const totalPoints = pointsData.reduce(
-				(acc, curr) => acc + curr.points,
-				0
-			);
-			console.log(totalPoints);
-			const id = order.client;
-			await Client.findByIdAndUpdate(id, { points: totalPoints });
-		} */
 
 		res.status(200).json({
 			ok: true,
@@ -544,6 +741,7 @@ const deleteOrder = async (req, res = response) => {
 			msg: 'Orden eliminada',
 		});
 	} catch (error) {
+		console.log(error);
 		logger.error(error);
 		res.status(500).json({
 			ok: false,

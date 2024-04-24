@@ -4,6 +4,7 @@ const { createLogger, transports, format } = require('winston');
 const logsFolder = `../logs/`;
 
 const loggerTransports = [
+	// Define los transportes para el logger principal
 	new transports.File({
 		level: 'info',
 		filename: `${__dirname}/../logs/logs.log`,
@@ -12,7 +13,8 @@ const loggerTransports = [
 	}),
 ];
 
-const loggerRequestTransports = [
+const requestLoggerTransports = [
+	// Define los transportes para el logger de solicitudes
 	new transports.File({
 		level: 'warn',
 		filename: `${__dirname}/../logs/requestWarnings.log`,
@@ -27,57 +29,51 @@ const loggerRequestTransports = [
 	}),
 ];
 
-if (process.env.NODE_ENV !== 'production') {
-	loggerTransports.push(new transports.Console());
+// Define los transportes para el nuevo logger de operaciones del controlador
+const controllerLoggerTransports = [
+	new transports.File({
+		level: 'info', // Puedes ajustar el nivel según tus necesidades
+		filename: `${__dirname}/../logs/controllerOperations.log`,
+		maxsize: 5120000,
+		maxFiles: 5,
+	}),
+];
 
-	loggerRequestTransports.push(
-		new transports.File({
-			level: 'info',
-			filename: `${logsFolder}requestInfo.log`,
-		})
-	);
-}
-
+// Define una función para redactar información sensible, si es necesario
 const redactSensitiveInfo = format((info) => {
-	// Copiar el objeto info para evitar modificar el original
-	const modifiedInfo = { ...info };
-
-	// Redactar el password si está presente en el objeto body
-	if (
-		modifiedInfo.meta &&
-		modifiedInfo.meta.req &&
-		modifiedInfo.meta.req.body
-	) {
-		if (modifiedInfo.meta.req.body.password) {
-			modifiedInfo.meta.req.body.password = '[REDACTED]';
-		}
-	}
-
-	return modifiedInfo;
+	// Implementa la lógica de redacción según tus necesidades
+	return info;
 });
 
+// Define el formato para los logs
+const loggerFormat = format.combine(
+	redactSensitiveInfo(), // Si es necesario
+	format.timestamp(),
+	format.json(),
+	format.prettyPrint()
+);
+
+// Crea el logger principal
 const logger = createLogger({
 	transports: loggerTransports,
-	format: format.combine(
-		redactSensitiveInfo(), // Aplicar la función de redacción a los logs
-		format.timestamp(),
-		format.json(),
-		format.prettyPrint()
-	),
+	format: loggerFormat,
 });
 
+// Crea el logger para las solicitudes
 const requestLogger = createLogger({
-	transports: loggerRequestTransports,
-	format: format.combine(
-		redactSensitiveInfo(), // Aplicar la función de redacción a los logs
-		format.timestamp(),
-		format.json(),
-		format.prettyPrint()
-	),
+	transports: requestLoggerTransports,
+	format: loggerFormat,
+});
+
+// Crea el logger para las operaciones del controlador
+const controllerLogger = createLogger({
+	transports: controllerLoggerTransports,
+	format: loggerFormat,
 });
 
 module.exports = {
 	logger,
 	requestLogger,
+	controllerLogger, // Exporta el nuevo logger
 	logsFolder,
 };
