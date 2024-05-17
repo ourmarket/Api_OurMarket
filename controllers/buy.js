@@ -14,7 +14,9 @@ const getBuys = async (req, res = response) => {
 		const buys = await Buy.find({
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
-		}).populate('supplier', 'businessName');
+		})
+			.populate('supplier', 'businessName')
+			.sort({ createdAt: -1 });
 
 		res.status(200).json({
 			ok: true,
@@ -121,6 +123,31 @@ const postBuy = async (req, res = response) => {
 };
 
 // ✔
+const putBuy = async (req, res = response) => {
+	try {
+		const { id } = req.params;
+		const { state, ...data } = req.body;
+
+		const buy = await Buy.findByIdAndUpdate(id, data, { new: true });
+
+		res.status(200).json({
+			ok: true,
+			status: 200,
+			data: {
+				buy,
+			},
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+
+// ✔
 const deleteBuy = async (req, res = response) => {
 	try {
 		const { id } = req.params;
@@ -149,5 +176,6 @@ module.exports = {
 	getBuys,
 	getBuy,
 	postBuy,
+	putBuy,
 	deleteBuy,
 };

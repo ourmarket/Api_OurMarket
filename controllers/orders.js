@@ -412,17 +412,16 @@ const putOrder = async (req, res = response) => {
 
 		// 1. Si hay cambios en los productos
 		if (data?.orderItems) {
-			// 1.1 Comparar orden anterior y la modificada
+			const orderItemsUpdate = [];
+
 			const oldOrder = await Order.findById(id);
 			const modifyOrder = {
 				...data,
 			};
 
-			const orderItemsUpdate = [];
-
+			// 1.1 Recorrer todos los orderItems modificados
 			for (let i = 0; i < modifyOrder.orderItems.length; i++) {
-				// 1-1 Buscar stock de cada producto
-
+				// 1.1.1 Buscar stock de cada producto
 				const stock = await Stock.find(
 					{
 						state: true,
@@ -442,7 +441,7 @@ const putOrder = async (req, res = response) => {
 					}
 				).sort({ createdAt: 1 });
 
-				// 1-2 Obtener los dato para re-calcular el stock
+				// 1.1.2 Obtener los datos para ver si debo re-calcular el stock
 				const stockAvailable = stock.map((item) => ({
 					dateStock: item.createdAt,
 					quantity: item.quantity,
@@ -458,80 +457,92 @@ const putOrder = async (req, res = response) => {
 				);
 
 				const originalTotalQuantity = oldOrderItem.totalQuantity;
-				const originalUnitCost = oldOrderItem.unitCost;
 				const newTotalQuantity = modifyOrder.orderItems[i].totalQuantity;
-				const stockData = oldOrderItem.stockData.map((item) => ({
-					dateStock: item.dateStock,
-					quantity: item.quantityOriginal,
-					stock:
-						stockAvailable.find(
-							(stockAvailable) =>
-								stockAvailable.stockId.toString() === item.stockId.toString()
-						)?.stock || 0, // solo compara con stock existentes, si no lo encuentra es 0
-					stockId: item.stockId.toString(), // lo convierto a string para evitar problemas en adjustStock
-					unitCost: item.unitCost,
-					modify: item.quantityModify || 0,
-				}));
+				const originalUnitCost = oldOrderItem.unitCost;
 
-				// 1-3 Aplicamos el algoritmo de ajuste
-				const adjustStockData = adjustStock(
-					originalTotalQuantity,
-					newTotalQuantity,
-					stockAvailable,
-					stockData,
-					originalUnitCost
-				);
+				// 1.1.3 Si se modifico la cantidad de prod. modifico el stock
+				if (originalTotalQuantity !== newTotalQuantity) {
+					// 1.1.3.1 Obtengo stockData
+					const stockData = oldOrderItem.stockData.map((item) => ({
+						dateStock: item.dateStock,
+						quantity: item.quantityOriginal,
+						stock:
+							stockAvailable.find(
+								(stockAvailable) =>
+									stockAvailable.stockId.toString() === item.stockId.toString()
+							)?.stock || 0, // solo compara con stock existentes, si no lo encuentra es 0
+						stockId: item.stockId.toString(), // lo convierto a string para evitar problemas en adjustStock
+						unitCost: item.unitCost,
+						modify: item.quantityModify || 0,
+					}));
 
-				// 1-4 Obtenemos el stock modificado
-				const allStockData =
-					originalTotalQuantity > newTotalQuantity
-						? adjustStockData.modifyStock
-						: mergeArrays(
-								adjustStockData.modifyStock,
-								adjustStockData.availableStock
-						  );
-
-				orderItemsUpdate.push({
-					...modifyOrder.orderItems[i],
-					unitCost: adjustStockData.unitCost,
-					stockData: allStockData
-						.filter((item) => item.modify && item.modify > 0)
-						.map((stock) => ({
-							stockId: stock.stockId,
-							unitCost: stock.unitCost,
-							quantityOriginal: stock.quantity,
-							quantityNew: stock.stock,
-							quantityModify: stock.modify,
-							dateStock: stock.dateStock,
-						})),
-				});
-
-				controllerLogger.info(
-					`------------------- Producto ${i + 1} -------------------`
-				);
-				controllerLogger.info({
-					id: modifyOrder.orderItems[i].productId,
-					product: modifyOrder.orderItems[i].productId,
-					newQuantity: newTotalQuantity,
-					oldQuantity: originalTotalQuantity,
-					stockData,
-					adjustStockData,
-					allStockData,
-				});
-
-				// 1-5 Actualizar stock en DB
-				for (let x = 0; x < allStockData.length; x++) {
-					const stockData = allStockData[x];
-					controllerLogger.info(
-						`----------------Stock Modificado ${x + 1} ---------------`
+					// 1.1.3.2 Aplicamos el algoritmo de ajuste
+					const adjustStockData = adjustStock(
+						originalTotalQuantity,
+						newTotalQuantity,
+						stockAvailable,
+						stockData,
+						originalUnitCost
 					);
-					controllerLogger.info({
-						stockId: stockData.stockId,
-						newValue: stockData.stock,
+
+					// 1.1.3.3 Obtenemos el stock modificado
+					const allStockData =
+						originalTotalQuantity > newTotalQuantity
+							? adjustStockData.modifyStock
+							: mergeArrays(
+									adjustStockData.modifyStock,
+									adjustStockData.availableStock
+							  );
+
+					orderItemsUpdate.push({
+						...modifyOrder.orderItems[i],
+						unitCost: adjustStockData.unitCost,
+						stockData: allStockData
+							.filter((item) => item.modify && item.modify > 0)
+							.map((stock) => ({
+								stockId: stock.stockId,
+								unitCost: stock.unitCost,
+								quantityOriginal: stock.quantity,
+								quantityNew: stock.stock,
+								quantityModify: stock.modify,
+								dateStock: stock.dateStock,
+							})),
 					});
 
-					await Stock.findByIdAndUpdate(stockData.stockId, {
-						stock: stockData.stock,
+					controllerLogger.info(
+						`------------------- Producto ${i + 1} -------------------`
+					);
+					controllerLogger.info({
+						id: modifyOrder.orderItems[i].productId,
+						product: modifyOrder.orderItems[i].productId,
+						newQuantity: newTotalQuantity,
+						oldQuantity: originalTotalQuantity,
+						stockData,
+						adjustStockData,
+						allStockData,
+					});
+
+					// 1.1.3.4 Actualizar stock en DB
+					for (let x = 0; x < allStockData.length; x++) {
+						const stockData = allStockData[x];
+						controllerLogger.info(
+							`----------------Stock Modificado ${x + 1} ---------------`
+						);
+						controllerLogger.info({
+							stockId: stockData.stockId,
+							newValue: stockData.stock,
+						});
+
+						await Stock.findByIdAndUpdate(stockData.stockId, {
+							stock: stockData.stock,
+						});
+					}
+				}
+
+				// 1.1.3 Si NO se modifico la cantidad de prod. NO modifico el stock
+				if (originalTotalQuantity === newTotalQuantity) {
+					orderItemsUpdate.push({
+						...modifyOrder.orderItems[i],
 					});
 				}
 			}
@@ -546,29 +557,6 @@ const putOrder = async (req, res = response) => {
 				new: true,
 			});
 
-			/* for (let i = 0; i < data.orderItems.length; i++) {
-				for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
-					const stockId = data.orderItems[i].stockData[x].stockId;
-					const newStock = data.orderItems[i].stockData[x].quantityNew;
-
-					const res = await Stock.findByIdAndUpdate(stockId, {
-						stock: newStock,
-					});
-					console.log(res);
-				}
-			}
-
-			// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
-			const filterEmptyProducts = data.orderItems.filter(
-				(product) => product.totalQuantity
-			);
-			const dataFilter = {
-				...data,
-				orderItems: filterEmptyProducts,
-			};
-
-			const order = await Order.findByIdAndUpdate(id, dataFilter); */
-
 			return res.status(200).json({
 				ok: true,
 				status: 200,
@@ -577,11 +565,9 @@ const putOrder = async (req, res = response) => {
 				},
 			});
 		}
-		// --------------------------------------------------------------------
-		// 2. Si no hay cambio en los productos
 
 		// --------------------------------------------------------------------
-		// 3. Si no hay cambio en los productos
+		// 2. Si no hay cambio en los productos
 		const order = await Order.findByIdAndUpdate(id, data, { new: true });
 
 		return res.status(200).json({
@@ -601,90 +587,6 @@ const putOrder = async (req, res = response) => {
 		});
 	}
 };
-/* const putOrder = async (req, res = response) => {
-	try {
-		const { id } = req.params;
-		const { state, ...data } = req.body;
-
-		if (data?.orderItems) {
-			for (let i = 0; i < data.orderItems.length; i++) {
-				for (let x = 0; x < data.orderItems[i]?.stockData.length; x++) {
-					const stockId = data.orderItems[i].stockData[x].stockId;
-					const newStock = data.orderItems[i].stockData[x].quantityNew;
-
-					const res = await Stock.findByIdAndUpdate(stockId, {
-						stock: newStock,
-					});
-					console.log(res);
-				}
-			}
-
-			// Si se borro el producto totalQuantity es 0, filtramos y borramos eso productos de orderItems
-			const filterEmptyProducts = data.orderItems.filter(
-				(product) => product.totalQuantity
-			);
-			const dataFilter = {
-				...data,
-				orderItems: filterEmptyProducts,
-			};
-
-			const order = await Order.findByIdAndUpdate(id, dataFilter);
-
-			// Si estaba impaga y paso a estar paga
-			/* if (order.paid === false && req.body.paid === true) {
-				const dataPoints = {
-					clientId: order.client,
-					points: Math.trunc(order.subTotal),
-					action: 'buy',
-					orderId: order._id,
-					superUser: tokenData.UserInfo.superUser,
-				};
-	
-				const points = new Points(dataPoints);
-				// Guardar DB
-				await points.save();
-	
-				// actualizo puntos dentro de cliente
-				const pointsData = await Points.find({
-					state: true,
-					clientId: order.client,
-				});
-				const totalPoints = pointsData.reduce(
-					(acc, curr) => acc + curr.points,
-					0
-				);
-				console.log(totalPoints);
-				const id = order.client;
-				await Client.findByIdAndUpdate(id, { points: totalPoints });
-			} 
-
-			return res.status(200).json({
-				ok: true,
-				status: 200,
-				data: {
-					order,
-				},
-			});
-		}
-
-		const order = await Order.findByIdAndUpdate(id, data, { new: true });
-
-		return res.status(200).json({
-			ok: true,
-			status: 200,
-			data: {
-				order,
-			},
-		});
-	} catch (error) {
-		logger.error(error);
-		res.status(500).json({
-			ok: false,
-			status: 500,
-			msg: error.message,
-		});
-	}
-}; */
 
 // ✔
 const deleteOrder = async (req, res = response) => {

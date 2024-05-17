@@ -1,5 +1,18 @@
 const { Router } = require('express');
-const { getBuys, getBuy, postBuy, deleteBuy } = require('../controllers/buy');
+const {
+	getBuys,
+	getBuy,
+	postBuy,
+	deleteBuy,
+	putBuy,
+} = require('../controllers/buy');
+const {
+	getBuysValidator,
+	getBuyValidator,
+	postBuyValidator,
+	putBuyValidator,
+	deleteBuyValidator,
+} = require('../validations/buy-validator');
 
 const router = Router();
 
@@ -7,13 +20,10 @@ const router = Router();
  * {{url}}/api/buy
  */
 
-router.get('/', getBuys);
-router.get('/:id', getBuy);
-router.post('/', postBuy);
-router.delete('/:id', deleteBuy);
-/* router.put('/:id', putCashierSessionValidation, putCashierSession);
-router.delete('/:id', deleteCashierSessionValidation, deleteCashierSession); */
+router.get('/', getBuysValidator, getBuys);
+router.get('/:id', getBuyValidator, getBuy);
+router.post('/', postBuyValidator, postBuy);
+router.put('/:id', putBuyValidator, putBuy);
+router.delete('/:id', deleteBuyValidator, deleteBuy);
 
 module.exports = router;
-
-/* TODO agregar validaciones */
