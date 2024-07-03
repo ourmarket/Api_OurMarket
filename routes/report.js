@@ -38,6 +38,7 @@ const {
 const {
 	totalPaymentByClientReport,
 } = require('../controllers/reports/clientsReport');
+const { reportTotalBuy } = require('../controllers/reports/buyReport');
 
 const router = Router();
 
@@ -101,5 +102,8 @@ router.get('/reportTotalExpensesByCategory', getTotalCategoryExpensesReport);
 
 // payment
 router.get('/paymentByLastXdayReport', paymentByLastXdayReport);
+
+// buys
+router.get('/totalBuys', reportTotalBuy);
 
 module.exports = router;
