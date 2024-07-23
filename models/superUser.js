@@ -5,6 +5,7 @@ const SuperUserSchema = Schema(
 		clientId: { type: String, unique: true },
 		version: { type: String }, // [full, lite, dr]
 		superUserData: {
+			businessName: { type: String, required: true },
 			name: { type: String },
 			lastName: { type: String },
 			phone: { type: String },
