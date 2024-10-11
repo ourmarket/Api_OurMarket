@@ -125,15 +125,22 @@ const putCashierSession = async (req, res = response) => {
 		const { state, newOrderId, ...data } = req.body;
 
 		if (newOrderId) {
+			let session = null;
 			const findSession = await CashierSession.findById(id);
 
-			const addOrderData = {
-				localOrder: [...findSession.localOrder, newOrderId],
-			};
+			const findOrder = findSession.localOrder.find(
+				(order) => order === newOrderId
+			);
 
-			const session = await CashierSession.findByIdAndUpdate(id, addOrderData, {
-				new: true,
-			});
+			if (!findOrder) {
+				const addOrderData = {
+					localOrder: [...findSession.localOrder, newOrderId],
+				};
+
+				session = await CashierSession.findByIdAndUpdate(id, addOrderData, {
+					new: true,
+				});
+			}
 
 			return res.status(200).json({
 				ok: true,
