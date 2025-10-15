@@ -16,7 +16,7 @@ const getAllStock = async (req, res = response) => {
 		const stock = await Stock.find({
 			state: true,
 			superUser: tokenData.UserInfo.superUser,
-		}).populate('product', ['name', 'img']);
+		}).populate('product', ['name', 'img']).sort({ createdAt: -1 });
 
 		return res.status(200).json({
 			ok: true,
