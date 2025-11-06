@@ -8,6 +8,7 @@ const allowedOrigins = [
 	'http://localhost:3000',
 	'http://127.0.0.1:3000',
 	'http://localhost:3015',
+	'http://localhost:3016',
 	'http://192.168.100.1:3015',
 	'http://192.168.100.2:3015',
 	'http://192.168.100.3:3015',
@@ -15,6 +16,7 @@ const allowedOrigins = [
 	'http://192.168.100.5:3015',
 	'http://localhost:5173',
 	'http://localhost:5174',
+	'https://preventa-ringoagromarket.netlify.app',
 ];
 
 module.exports = allowedOrigins;

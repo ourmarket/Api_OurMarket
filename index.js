@@ -123,6 +123,7 @@ app.use('/api/cashierSession', require('./routes/cashierSession'));
 
 app.use('/api/buy', require('./routes/buy'));
 app.use('/api/stock', require('./routes/stock'));
+app.use('/api/negocios', require('./routes/negocio'));
 
 // -----------error----------------
 app.use(

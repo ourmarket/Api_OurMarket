@@ -15,6 +15,7 @@ const {
 	refreshDeliveryApp,
 	logoutDeliveryApp,
 } = require('../controllers/auth/authDeliveryApp');
+const { loginPreventas, refreshPreventas, logoutPreventas } = require('../controllers/auth/authPreventas');
 
 const router = Router();
 
@@ -34,5 +35,9 @@ router.post('/tpv/logout', logoutTpv);
 router.post('/deliveryApp/login', loginValidator, loginDeliveryApp);
 router.get('/deliveryApp/refresh', refreshDeliveryApp);
 router.post('/deliveryApp/logout', logoutDeliveryApp);
+// Preventas App
+router.post('/preventasApp/login', loginValidator, loginPreventas);
+router.get('/preventasApp/refresh', refreshPreventas);
+router.post('/preventasApp/logout', logoutPreventas);
 
 module.exports = router;

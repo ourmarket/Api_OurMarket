@@ -36,7 +36,7 @@ const getToken = (payload) => {
 const getTokenData = (token) => {
 	let data = null;
 
-	jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+	jwt.verify(token, process.env.JWT_REFRESH, async (err, decoded) => {
 		if (err) {
 			logger.error('Error al obtener data del token', err);
 		} else {

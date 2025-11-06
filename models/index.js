@@ -28,6 +28,7 @@ const SuperUser = require('./superUser');
 const CashierSession = require('./cashierSession');
 const Buy = require('./buy');
 const Stock = require('./stock');
+const Negocio = require('./negocio');
 
 module.exports = {
 	Category,
@@ -59,4 +60,5 @@ module.exports = {
 	CashierSession,
 	Buy,
 	Stock,
+	Negocio
 };

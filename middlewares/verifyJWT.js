@@ -2,20 +2,23 @@
 const jwt = require('jsonwebtoken');
 
 const verifyJWT = (req, res, next) => {
-	/* const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (!authHeader?.startsWith('Bearer ')) return res.sendStatus(401);
-    const token = authHeader.split(' ')[1];
-    console.log(token) */
 	const token = req.header('x-token');
 
+	if (!token) {
+		return res.status(401).json({ ok: false, msg: 'No token provided' });
+	}
+
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-		if (err) console.log(err);
-		return res.sendStatus(403).json({
-			err,
-		}); // invalid token
-		req.user = decoded.UserInfo.id;
-		req.role = decoded.UserInfo.role;
-		next();
+		if (err) {
+			console.error('JWT verification failed:', err.message);
+			return res.status(403).json({ ok: false, msg: 'Invalid or expired token' });
+		}
+
+		// ✅ Token válido → guardamos info en req
+		req.user = decoded.UserInfo?.id;
+		req.role = decoded.UserInfo?.role;
+
+		next(); // 🚀 continúa con el siguiente middleware o controlador
 	});
 };
 
