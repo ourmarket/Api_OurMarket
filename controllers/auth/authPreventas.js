@@ -122,9 +122,10 @@ const loginPreventas = async (req, res) => {
 			}
 
 			// Se guarda el refreshToken en el usuario actual
-			foundUser.refreshToken = [...newRefreshTokenArray, newRefreshToken];
-
-			await foundUser.save();
+			await User.findByIdAndUpdate(foundUser._id, {
+				$set: { refreshToken: [...newRefreshTokenArray, newRefreshToken] },
+				
+			});
 
 			// Se crea una Cookie segura con el refresh token
 			res.cookie('jwt_deliveryApp', newRefreshToken, {
@@ -241,7 +242,7 @@ const refreshPreventas = async (req, res) => {
 				logger.error({ ip: req.clientIp, msg: 'Refresh token expirado', err }); // Se limpia el token expirado de la BD.
 				await User.findByIdAndUpdate(foundUser._id, {
 					$set: { refreshToken: [...newRefreshTokenArray] },
-					_,
+					
 				});
 				return res.status(403).json({
 					ok: false,
@@ -345,10 +346,10 @@ const logoutPreventas = async (req, res) => {
 		}
 
 		// Delete refreshToken in db
-		foundUser.refreshToken = foundUser.refreshToken.filter(
-			(rt) => rt !== refreshToken
-		);
-		await foundUser.save();
+
+		await User.findByIdAndUpdate(foundUser._id, {
+			$set: { refreshToken: [] },
+		});
 
 		res.clearCookie('jwt_deliveryApp', {
 			httpOnly: true,

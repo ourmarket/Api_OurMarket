@@ -56,17 +56,16 @@ const NegocioSchema = Schema(
 		},
 		lat: {
 			type: Number,
-			default: null,		
+			default: null,
 		},
 		lng: {
 			type: Number,
-			default: null,		
+			default: null,
 		},
-		informacionAdicional: {
-			productosQueCompra: { type: String, default: null },
-			productosQueLeInteresan: { type: String , default: null },
-			distribuidorActual: { type: String, default: null },
-		},
+
+		productosQueCompra: { type: [String], default: [] },
+		productosQueLeInteresan: { type: [String], default: [] },
+		distribuidorActual: { type: [String], default: [] },
 
 		cargadoPor: {
 			type: Schema.Types.ObjectId,

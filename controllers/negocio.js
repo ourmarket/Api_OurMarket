@@ -7,8 +7,8 @@ const getNegocios = async (req, res = response) => {
 	try {
 		const jwt = req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
-		console.log('tokenData')
-		console.log(req.cookies.jwt_deliveryApp)
+		console.log('tokenData');
+		console.log(req.cookies.jwt_deliveryApp);
 
 		const negocios = await Negocio.find({
 			state: true,
@@ -68,7 +68,7 @@ const postNegocio = async (req, res = response) => {
 			productosQueLeInteresan,
 			distribuidorActual,
 			lat,
-			lng
+			lng,
 		} = req.body;
 		const jwt =
 			req.cookies.jwt_dashboard ||
@@ -90,11 +90,10 @@ const postNegocio = async (req, res = response) => {
 			esCliente,
 			lat,
 			lng,
-			informacionAdicional: {
-				productosQueCompra,
-				productosQueLeInteresan,
-				distribuidorActual,
-			},
+			productosQueCompra,
+			productosQueLeInteresan,
+			distribuidorActual,
+
 			cargadoPor: tokenData.UserInfo.id,
 			superUser: tokenData.UserInfo.superUser,
 		};
