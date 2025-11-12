@@ -54,6 +54,10 @@ const NegocioSchema = Schema(
 			type: Boolean,
 			default: false,
 		},
+		vendeNuestrasCategorias: {
+			type: Boolean,
+			default: false,
+		},
 		lat: {
 			type: Number,
 			default: null,
