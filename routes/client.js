@@ -10,6 +10,7 @@ const {
 	postSimpleClient,
 	deleteSimpleClient,
 	getClientQuantity,
+	searchClients,
 } = require('../controllers/client');
 const {
 	getClientValidator,
@@ -30,13 +31,14 @@ router.get('/', getClients);
 router.get('/quantity', getClientQuantity);
 // cambiar los clientes a activos si compraron en los ultimos 30 dias
 // router.get('/setActiveClients', activeClient)
+router.get("/search", searchClients);
 
 // Obtener una Cliente por id - publico
 router.get('/:id', getClientValidator, getClient);
 
 router.get('/user/:id', getClientUserValidator, getUserClient);
 
-router.get('/addresses/:id', getClientValidator, getAddressesClient);
+router.get('/addresses/:id', getAddressesClient);
 
 // Crear Cliente - privado - cualquier persona con un token válido
 router.post('/', postClientValidator, postClient);

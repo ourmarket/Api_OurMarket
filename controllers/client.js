@@ -441,6 +441,130 @@ const getClientQuantity = async (req, res = response) => {
 	}
 };
 
+/**
+ * Buscar clientes por nombre aproximado
+ * GET /api/clients/search?name=palabra
+ */
+const searchClients = async (req, res) => {
+    try {
+        const { name, lastName } = req.query;
+        const searchString = `${name || ''} ${lastName || ''}`.trim();
+
+        if (!searchString || searchString.length < 2) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Debes enviar un nombre o apellido a buscar.',
+            });
+        }
+
+        // 1. Preparar expresiones regulares
+        const searchWords = searchString.split(/\s+/).filter(w => w.length > 0);
+        
+        // Expresión para coincidencia de CUALQUIER palabra (la menos estricta) -> /Diego|Flores/i
+        const looseRegex = new RegExp(searchWords.join('|'), 'i'); 
+        
+        // Expresión para coincidencia EXACTA de la frase completa
+        const exactPhraseRegex = new RegExp(`^${searchString}$`, 'i'); // Usamos ^$ para coincidencia de campo completo
+
+        let usuarios = [];
+
+        // 🔎 FASE 1: Búsqueda Estricta (Frase Exacta en un solo campo)
+        // Busca usuarios cuyo campo 'name' o 'lastName' COINCIDA EXACTAMENTE con la frase completa.
+        usuarios = await User.find({
+            $and: [
+                {
+                    $or: [
+                        { name: exactPhraseRegex },
+                        { lastName: exactPhraseRegex }
+                    ]
+                },
+                { state: true },
+                { superUser: '654974527ae94fa111479ad5' }
+            ]
+        }).select('_id name lastName phone superUser').limit(10);
+        
+        // --- 2. Fases de Búsqueda Secuenciales ---
+        
+        if (usuarios.length === 0 && searchWords.length > 1) {
+            
+            // 🔎 FASE 2: Búsqueda Combinada (Todas las palabras presentes en Name + LastName)
+            // Esto resuelve el caso "Diego Flores" donde 'Diego' está en 'name' y 'Flores' en 'lastName'.
+            
+            // Creamos una condición $and para asegurar que CADA palabra del query esté en name O lastName.
+            const combinedConditions = searchWords.map(word => {
+                const wordRegex = new RegExp(word, 'i');
+                return { 
+                    $or: [
+                        { name: wordRegex }, 
+                        { lastName: wordRegex } 
+                    ] 
+                };
+            });
+
+            usuarios = await User.find({
+                $and: [
+                    ...combinedConditions, // Todas las palabras deben estar presentes
+                    { state: true },
+                    { superUser: '654974527ae94fa111479ad5' }
+                ]
+            }).select('_id name lastName phone superUser').limit(10);
+        }
+
+
+        if (usuarios.length === 0) {
+            
+            // 🔎 FASE 3: Búsqueda Flexible (Cualquier Palabra en Cualquier Campo)
+            // Solo se ejecuta si las Fases 1 y 2 no encontraron nada.
+            usuarios = await User.find({
+                $and: [
+                    {
+                        $or: [
+                            { name: looseRegex },
+                            { lastName: looseRegex }
+                        ]
+                    },
+                    { state: true },
+                    { superUser: '654974527ae94fa111479ad5' }
+                ]
+            }).select('_id name lastName phone superUser').limit(10);
+        }
+        
+        // --- 3. Procesamiento de Resultados ---
+
+        if (usuarios.length === 0) {
+            return res.json({
+                ok: true,
+                results: [],
+            });
+        }
+
+        // extraemos IDs de usuarios
+        const usersIds = usuarios.map((u) => u._id);
+
+        // Buscar clientes asociados a esos usuarios
+        const clientes = await Client.find({
+            user: { $in: usersIds },
+            state: true,
+        })
+            .populate('user', 'name lastName phone email')
+            .limit(10);
+
+        return res.json({
+            ok: true,
+            count: clientes.length,
+            results: clientes.map((c) => ({
+                id: c._id,
+                nombre: `${c.user.name} ${c.user.lastName}`,
+            })),
+        });
+    } catch (error) {
+        console.error('Error en búsqueda de clientes:', error);
+        res.status(500).json({
+            ok: false,
+            msg: 'Error inesperado en el servidor.',
+        });
+    }
+};
 module.exports = {
 	postClient,
 	getClients,
@@ -452,4 +576,5 @@ module.exports = {
 	postSimpleClient,
 	deleteSimpleClient,
 	getClientQuantity,
+	searchClients,
 };

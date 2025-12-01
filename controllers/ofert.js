@@ -1,8 +1,9 @@
 const { response } = require('express');
-const { Ofert, Stock } = require('../models');
+const { Ofert, Stock, Product } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 const { ObjectId } = require('mongodb');
+const stock = require('../models/stock');
 
 const getOferts = async (req, res = response) => {
 	// ?stock=
@@ -424,7 +425,86 @@ const ofertsWithCategoryById = async (req, res = response) => {
 	}
 };
 
+/**
+ * POST /api/ofertas/buscar
+ * Body esperado:
+ * [
+ *   {
+ *     "product": "pechito",
+ *     "quantity": 7.4,
+ *     "unit": "kg",
+ *     "manualPrice": 6200
+ *   }
+ * ]
+ */
+const buscarOfertas = async (req, res) => {
+	try {
+		const items = req.body;
+
+		
+
+		if (!Array.isArray(items) || items.length === 0) {
+			return res.status(400).json({ ok: false, msg: 'Formato inválido' });
+		}
+
+		const resultados = [];
+
+		for (const item of items) {
+			const nombre = item.product;
+			if (!nombre) continue;
+
+			// Buscar TODAS las coincidencias aproximadas
+			const coincidencias = await Ofert.find({
+				description: { $regex: nombre, $options: 'i' },
+				state: true,
+				superUser: '654974527ae94fa111479ad5',
+			}).populate('product', 'name');
+
+			// No encontró nada
+			if (coincidencias.length === 0) {
+				resultados.push({
+					...item,
+					coincidencias: [],
+					encontrado: false,
+					msg: 'Sin coincidencias',
+				});
+				return res.json({
+					ok: false,
+					msg: `No se encontraron productos con este nombre: *${nombre}*. Reinicia el pedido.`,
+				});
+			}
+
+			// Mapear coincidencias
+			const coincidenciasMapped = coincidencias.map((p) => ({
+				id: p._id,
+				description: p.description,
+				productId: p.product,
+				basePrice: p.basePrice,
+			}));
+
+			resultados.push({
+				...item,
+				encontrado: coincidencias.length === 1,
+				coincidencias: coincidenciasMapped,
+			});
+		}
+
+		console.log(resultados)
+		res.json({
+			ok: true,
+			resultados,
+		});
+	} catch (error) {
+		console.error('Error búsqueda ofertas:', error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Error interno del servidor',
+		});
+	}
+};
+
 module.exports = {
+	buscarOfertas,
 	postOfert,
 	getOferts,
 	getOfert,

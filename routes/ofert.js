@@ -8,6 +8,7 @@ const {
 	getOfertByProductId,
 	ofertsWithCategory,
 	ofertsWithCategoryById,
+	buscarOfertas,
 } = require('../controllers/ofert');
 
 const {
@@ -25,6 +26,8 @@ const router = Router();
 
 //  Obtener todas las marcas - publico
 router.get('/', getOferts);
+
+router.post("/buscar", buscarOfertas);
 
 // Obtener una marca por id - publico
 router.get('/categories', ofertsWithCategory);

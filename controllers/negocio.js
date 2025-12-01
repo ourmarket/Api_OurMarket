@@ -5,7 +5,7 @@ const { logger } = require('../helpers/logger');
 
 const getNegocios = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt_deliveryApp;
+		const jwt = req.cookies.jwt_dashboard || req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 		console.log('tokenData');
 		console.log(req.cookies.jwt_deliveryApp);
