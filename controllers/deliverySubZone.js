@@ -1,19 +1,14 @@
 const { response } = require('express');
 const { DeliverySubZone } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getDeliverySubZones = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const deliverySubZones = await DeliverySubZone.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		})
 			.populate('deliveryZone', ['name'])
 			.sort({ name: -1 });
@@ -64,11 +59,7 @@ const getDeliverySubZone = async (req, res = response) => {
 const postDeliverySubZone = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const deliverySubZoneDB = await DeliverySubZone.findOne({
 			name: body.name,
@@ -83,7 +74,7 @@ const postDeliverySubZone = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const deliverySubZone = new DeliverySubZone(data);

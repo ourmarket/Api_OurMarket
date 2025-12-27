@@ -1,15 +1,14 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const { existProductLotById } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getProductLotValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existProductLotById),
 	validateFields,
 ];
 const postProductLotValidator = [
-	validarJWT,
 	check('product', 'El producto es obligatorio').not().isEmpty(),
 	check('supplier', 'El proveedor obligatorio').not().isEmpty(),
 	check('quantity', 'La cantidad  es obligatoria').not().isEmpty(),
@@ -17,14 +16,12 @@ const postProductLotValidator = [
 	validateFields,
 ];
 const putProductLotValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existProductLotById),
 	validateFields,
 ];
 const deleteProductLotValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existProductLotById),
 	validateFields,

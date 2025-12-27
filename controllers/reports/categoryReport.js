@@ -15,11 +15,7 @@ const getCategoryReport = async (req, res = response) => {
 	const from = new Date(year, month, day, 0, 0, 0, 0);
 
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 		let report = {};
 
 		if (stock === '1') {
@@ -27,7 +23,7 @@ const getCategoryReport = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 					},
 				},
 				{
@@ -100,7 +96,7 @@ const getCategoryReport = async (req, res = response) => {
 					$match: {
 						state: true,
 						status: 'Entregado',
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						deliveryDate: {
 							$gte: from,
 						},
@@ -210,7 +206,7 @@ const getCategoryReport = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 					},
 				},
 				{
@@ -280,7 +276,7 @@ const getCategoryReport = async (req, res = response) => {
 					$match: {
 						state: true,
 						status: 'Entregado',
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						deliveryDate: {
 							$gte: from,
 						},
@@ -408,7 +404,7 @@ const getCategoryReportByDay = async (req, res = response) => {
 				$match: {
 					state: true,
 					status: 'Entregado',
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 					deliveryDate: {
 						$gte: from,
 					},

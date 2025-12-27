@@ -1,26 +1,5 @@
 const { response } = require('express');
-const {
-	SuperUser,
-	User,
-	Client,
-	Category,
-	ClientAddress,
-	Config,
-	DeliverySubZone,
-	DeliveryTruck,
-	DeliveryZone,
-	Distributor,
-	Employee,
-	Expenses,
-	Ofert,
-	Order,
-	Points,
-	Product,
-	ProductLot,
-	Recommendation,
-	Salary,
-	Supplier,
-} = require('../models');
+const { SuperUser, User, Config } = require('../models');
 const bcryptjs = require('bcryptjs');
 const { logger } = require('../helpers/logger');
 
@@ -214,92 +193,18 @@ const deleteSuperUser = async (req, res = response) => {
 	}
 };
 
-// user
-const update = async (req, res = response) => {
+// optener superUsers por clientId
+const getSuperUserByClientId = async (req, res = response) => {
 	try {
-		await User.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Client.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Category.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await ClientAddress.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Config.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await DeliverySubZone.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await DeliveryTruck.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await DeliveryZone.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Distributor.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Employee.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Expenses.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Ofert.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Order.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Points.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Product.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await ProductLot.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Recommendation.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Salary.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-		await Supplier.updateMany(
-			{},
-			{ $set: { superUser: '654974527ae94fa111479ad5' } }
-		);
-
+		const { clientId } = req.params;
+		const superUser = await SuperUser.findOne({ clientId, state: true });
 		return res.status(200).json({
 			ok: true,
 			status: 200,
-			msg: 'User modificado',
+			superUser,
 		});
 	} catch (error) {
+		logger.error(error);
 		return res.status(500).json({
 			ok: false,
 			status: 500,
@@ -314,5 +219,5 @@ module.exports = {
 	getSuperUser,
 	putSuperUser,
 	deleteSuperUser,
-	update,
+	getSuperUserByClientId,
 };

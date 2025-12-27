@@ -5,6 +5,7 @@ const {
 	postSuperUser,
 	putSuperUser,
 	deleteSuperUser,
+	getSuperUserByClientId,
 } = require('../controllers/superUser');
 
 const router = Router();
@@ -19,6 +20,9 @@ router.get('/', getSuperUsers);
 
 // Obtener una categoría por id - publico
 router.get('/:id', getSuperUser);
+
+// Obtener una categoría por clientId - publico
+router.get('/client/:clientId', getSuperUserByClientId);
 
 // Crear categoría - privado - cualquier persona con un token válido
 router.post('/', postSuperUser);

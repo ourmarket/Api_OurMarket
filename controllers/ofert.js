@@ -1,9 +1,7 @@
 const { response } = require('express');
-const { Ofert, Stock, Product } = require('../models');
-const { getTokenData } = require('../helpers');
+const { Ofert, Stock } = require('../models');
 const { logger } = require('../helpers/logger');
 const { ObjectId } = require('mongodb');
-const stock = require('../models/stock');
 
 const getOferts = async (req, res = response) => {
 	// ?stock=
@@ -11,14 +9,9 @@ const getOferts = async (req, res = response) => {
 	// 1= stock=[{data}]
 	try {
 		const { stock = 0, limit = 1000000, from = 0 } = req.query;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		if (+stock === 1) {
-			const query = { state: true, superUser: tokenData.UserInfo.superUser };
+			const query = { state: true, superUser: req.tenant._id };
 			const notShow = { prices: 0, quantities: 0, __v: 0, superUser: 0 };
 			const [total, oferts, stocks] = await Promise.all([
 				Ofert.countDocuments(query),
@@ -30,7 +23,7 @@ const getOferts = async (req, res = response) => {
 				Stock.find(
 					{
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						stock: {
 							$gt: 0,
 						},
@@ -79,7 +72,7 @@ const getOferts = async (req, res = response) => {
 
 		const oferts = await Ofert.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		})
 			.populate('product', [
 				'name',
@@ -221,16 +214,11 @@ const getOfertByProductId = async (req, res = response) => {
 const postOfert = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const ofert = new Ofert(data);
@@ -441,8 +429,6 @@ const buscarOfertas = async (req, res) => {
 	try {
 		const items = req.body;
 
-		
-
 		if (!Array.isArray(items) || items.length === 0) {
 			return res.status(400).json({ ok: false, msg: 'Formato inválido' });
 		}
@@ -457,7 +443,7 @@ const buscarOfertas = async (req, res) => {
 			const coincidencias = await Ofert.find({
 				description: { $regex: nombre, $options: 'i' },
 				state: true,
-				superUser: '654974527ae94fa111479ad5',
+				superUser: '654974527ae94fa111479ad5', // esto es para el bot de whatsapp
 			}).populate('product', 'name');
 
 			// No encontró nada
@@ -489,7 +475,7 @@ const buscarOfertas = async (req, res) => {
 			});
 		}
 
-		console.log(resultados)
+		console.log(resultados);
 		res.json({
 			ok: true,
 			resultados,

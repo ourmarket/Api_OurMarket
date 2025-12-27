@@ -1,4 +1,4 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const {
 	existOrderById,
@@ -6,27 +6,24 @@ const {
 	existProductById,
 	existClientById,
 } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getOrderValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existOrderById),
 	validateFields,
 ];
 const getOrderUserValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existUserById),
 	validateFields,
 ];
 const getOrderClientValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existClientById),
 	validateFields,
 ];
 const postOrderValidator = [
-	validarJWT,
 	check('userId', 'No es un id de Mongo válido').isMongoId(),
 	check('userId').custom(existUserById),
 	// orderItems
@@ -57,7 +54,6 @@ const postOrderValidator = [
 	validateFields,
 ];
 const postOrderLocalValidator = [
-	validarJWT,
 	/* check('userId', 'No es un id de Mongo válido').isMongoId(),
 	check('userId').custom(existUserById), */
 	// orderItems
@@ -78,19 +74,17 @@ const postOrderLocalValidator = [
 	validateFields,
 ];
 const putOrderValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existOrderById),
 	validateFields,
 ];
 const deleteOrderValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existOrderById),
 	validateFields,
 ];
-const putOrderSetInactiveAllValidator = [validarJWT, isAdminRole];
+const putOrderSetInactiveAllValidator = [hasRole('ADMIN_ROLE')];
 
 module.exports = {
 	getOrderValidator,

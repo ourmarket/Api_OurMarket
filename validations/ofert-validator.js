@@ -1,6 +1,7 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const { existOfertById } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getOfertValidator = [
 	check('id', 'No es un id de Mongo válido').isMongoId(),
@@ -8,20 +9,17 @@ const getOfertValidator = [
 	validateFields,
 ];
 const postOfertValidator = [
-	validarJWT,
 	check('product', 'No es un id de Mongo válido').isMongoId(),
 	check('description', 'La descripción es obligatoria').not().isEmpty(),
 	validateFields,
 ];
 const putOfertValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existOfertById),
 	validateFields,
 ];
 const deleteOfertValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existOfertById),
 	validateFields,

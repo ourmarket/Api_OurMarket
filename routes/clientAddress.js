@@ -7,7 +7,7 @@ const {
 	deleteClientAddress,
 	getUserAddress,
 } = require('../controllers/clientAddress');
-const { validarJWT } = require('../middlewares');
+
 const {
 	getClientAddressValidator,
 	postClientAddressValidator,
@@ -21,7 +21,7 @@ const router = Router();
  * {{url}}/api/clients_address
  */
 
-router.get('/', validarJWT, getClientAddresses);
+router.get('/', getClientAddresses);
 
 router.get('/:id', getClientAddressValidator, getClientAddress);
 

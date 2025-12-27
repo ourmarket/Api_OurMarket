@@ -1,6 +1,7 @@
 const { check } = require('express-validator');
 const { existExpensesById } = require('../helpers');
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getExpensesValidation = [
 	check('id', 'No es un id de Mongo válido').isMongoId(),
@@ -8,7 +9,6 @@ const getExpensesValidation = [
 	validateFields,
 ];
 const postExpensesValidation = [
-	validarJWT,
 	check('expensesName', 'El gasto es obligatorio').not().isEmpty(),
 	check('category', 'La categoria del gasto es obligatorio').not().isEmpty(),
 	check('amount', 'El monto es obligatorio').not().isEmpty(),
@@ -16,7 +16,6 @@ const postExpensesValidation = [
 ];
 
 const putExpensesValidation = [
-	validarJWT,
 	check('expensesName', 'El gasto es obligatorio').not().isEmpty(),
 	check('category', 'La categoria del gasto es obligatorio').not().isEmpty(),
 	check('amount', 'El monto es obligatorio').not().isEmpty(),
@@ -25,8 +24,7 @@ const putExpensesValidation = [
 ];
 
 const deleteExpensesValidation = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existExpensesById),
 	validateFields,

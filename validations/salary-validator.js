@@ -1,15 +1,14 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const { existSalaryById, existEmployeeById } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getSalaryValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existSalaryById),
 	validateFields,
 ];
 const postSalaryValidator = [
-	validarJWT,
 	check('employeeId', 'No es un id de Mongo válido').isMongoId(),
 	check('employeeId').custom(existEmployeeById),
 	check('amount', 'El monto es obligatorio').not().isEmpty(),
@@ -20,14 +19,12 @@ const postSalaryValidator = [
 	validateFields,
 ];
 const putSalaryValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existSalaryById),
 	validateFields,
 ];
 const deleteSalaryValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existSalaryById),
 	validateFields,

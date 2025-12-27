@@ -1,22 +1,18 @@
 const { response } = require('express');
 const { Stock } = require('../models');
-const { getTokenData } = require('../helpers');
+
 const { logger } = require('../helpers/logger');
 const { ObjectId } = require('mongodb');
 
 // ✔
 const getAllStock = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const stock = await Stock.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
-		}).populate('product', ['name', 'img']).sort({ createdAt: -1 });
+			superUser: req.tenant._id,
+		})
+			.populate('product', ['name', 'img'])
+			.sort({ createdAt: -1 });
 
 		return res.status(200).json({
 			ok: true,
@@ -38,17 +34,11 @@ const getAllStock = async (req, res = response) => {
 // ✔
 const getAvailableStock = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const stock = await Stock.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 					stock: {
 						$gt: 0,
 					},
@@ -149,16 +139,11 @@ const getStock = async (req, res = response) => {
 const postStock = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const stock = new Stock(data);

@@ -1,7 +1,7 @@
-const { validarJWT, isAdminRole } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
-const getConfigValidation = [validarJWT, isAdminRole];
-const putConfigValidation = [validarJWT, isAdminRole];
+const getConfigValidation = [hasRole('ADMIN_ROLE')];
+const putConfigValidation = [hasRole('ADMIN_ROLE')];
 
 module.exports = {
 	getConfigValidation,

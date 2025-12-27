@@ -1,95 +1,141 @@
+/**
+ * ORDER
+ * -----
+ * Documento OPERATIVO.
+ *
+ * REGLAS:
+ *
+ * 1) Order NO descuenta stock.
+ *    - El stock se descuenta SOLO al confirmar una venta (Sale).
+ *
+ * 2) Order NO es una venta.
+ *    - Puede cancelarse.
+ *    - Puede no pagarse.
+ *
+ * 3) Los precios se congelan en la orden.
+ *    - Cambios en Product.price NO afectan órdenes existentes.
+ *
+ * 4) Order NO se usa para reportes.
+ *    - Los reportes se hacen desde Sale.
+ *
+ * 5) Una Order CONFIRMED genera:
+ *    - Sale
+ *    - StockMovement (OUT)
+ */
+
 const { Schema, model } = require('mongoose');
 
 const OrderSchema = new Schema(
 	{
-		userCashier: { type: Schema.Types.ObjectId, ref: 'User', default: null }, // id del usuario cajero
-		userSeller: { type: Schema.Types.ObjectId, ref: 'User', default: null }, // id del usuario vendedor
-		client: { type: Schema.Types.ObjectId, ref: 'Client' },
-		userId: { type: Schema.Types.ObjectId, ref: 'User' },
-		receiptId: { type: String },
+		/**
+		 * Usuario que crea la orden
+		 */
+		user: {
+			type: Schema.Types.ObjectId,
+			ref: 'User',
+			required: true,
+		},
 
-		cashierMode: { type: Boolean, default: false }, // true = enviado a caja
+		/**
+		 * Cliente (opcional)
+		 */
+		customer: {
+			type: Schema.Types.ObjectId,
+			ref: 'Customer',
+		},
 
-		orderItems: [
+		/**
+		 * Estado de la orden
+		 */
+		status: {
+			type: String,
+			enum: ['OPEN', 'CONFIRMED', 'CANCELLED'],
+			default: 'OPEN',
+			index: true,
+		},
+
+		orderType: {
+			type: String,
+			enum: ['LOCAL', 'DELIVERY'],
+			required: true,
+		},
+		orderGenerationType: {
+			type: String,
+			enum: ['TPV', 'DASHBOARD', 'WEB', 'BOT'],
+			required: true,
+		},
+		deliveryTruck: {
+			type: Schema.Types.ObjectId,
+			ref: 'DeliveryTruck',
+			default: null,
+		},
+		deliveryZone: { type: Schema.Types.ObjectId, ref: 'DeliveryZone' },
+		shippingAddress: { type: Schema.Types.ObjectId, ref: 'ClientAddress' },
+
+		/**
+		 * Detalle de productos
+		 * Precio congelado al momento de la orden
+		 */
+		items: [
 			{
-				uniqueId: { type: String },
-				productId: {
+				product: {
 					type: Schema.Types.ObjectId,
 					ref: 'Product',
 					required: true,
 				},
-				name: { type: String, required: true },
-				unit: { type: String },
-				description: { type: String },
-				img: { type: String },
-				totalQuantity: { type: Number, required: true },
-				totalPrice: { type: Number, required: true },
-				unitPrice: { type: Number, required: true },
-				unitCost: { type: Number },
-				stockId: { type: String, default: null },
-				stockData: [
-					{
-						stockId: { type: String },
-						quantityOriginal: { type: Number },
-						quantityNew: { type: Number },
-						quantityModify: { type: Number },
-						unitCost: { type: Number },
-						dateStock: { type: Date },
-					},
-				],
+
+				name: String,
+				img: String,
+
+				quantity: {
+					type: Number,
+					required: true,
+					min: 1,
+				},
+
+				/**
+				 * Precio unitario aplicado
+				 * (no se recalcula jamás)
+				 */
+				unitPrice: {
+					type: Number,
+					required: true,
+					min: 0,
+				},
+
+				total: {
+					type: Number,
+					required: true,
+					min: 0,
+				},
 			},
 		],
 
-		shippingAddress: {
-			addressId: { type: Schema.Types.ObjectId, ref: 'ClientAddress' },
-			name: { type: String },
-			lastName: { type: String },
-			phone: { type: String },
-			address: { type: String },
-			flor: { type: String },
-			department: { type: String },
-			city: { type: String },
-			province: { type: String },
-			zip: { type: Number },
-			lat: { type: Number },
-			lng: { type: Number },
+		/**
+		 * Totales congelados
+		 */
+		totals: {
+			quantity: {
+				type: Number,
+				required: true,
+			},
+			amount: {
+				type: Number,
+				required: true,
+			},
 		},
 
-		deliveryTruck: { type: Schema.Types.ObjectId, ref: 'DeliveryTruck' },
-		employee: { type: Schema.Types.ObjectId, ref: 'Employee' },
-		deliveryZone: { type: Schema.Types.ObjectId, ref: 'DeliveryZone' },
-		numberOfItems: { type: Number, required: true },
-		tax: { type: Number },
-		subTotal: { type: Number, required: true },
-		total: { type: Number, required: true },
-
-		status: { type: String, default: 'Pendiente' }, // [ Pendiente, Entregado, Rechazado]
-		active: { type: Boolean, default: false },
-
-		commentary: { type: String },
-
-		payment: {
-			cash: { type: Number, default: 0 },
-			transfer: { type: Number, default: 0 },
-			debt: { type: Number, default: 0 },
-		},
-
-		paid: { type: Boolean, default: false },
-		discount: { type: Number, default: 0 },
-
-		deliveryDate: { type: Date },
-
-		state: { type: Boolean, default: true },
-
+		/**
+		 * Super usuario / comercio
+		 */
 		superUser: {
 			type: Schema.Types.ObjectId,
 			ref: 'SuperUser',
 			required: true,
+			index: true,
 		},
 	},
 	{ timestamps: true }
 );
 
 module.exports = model('Order', OrderSchema);
-
-/* TODO validar status */

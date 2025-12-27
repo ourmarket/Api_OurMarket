@@ -1,17 +1,12 @@
 const { response } = require('express');
 const { Sale } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getSales = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const query = { state: true, superUser: req.tenant._id };
 
 		const [total, sales] = await Promise.all([
 			Sale.countDocuments(query),
@@ -61,16 +56,12 @@ const getSale = async (req, res = response) => {
 const postSale = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const sale = new Sale(data);

@@ -1,14 +1,15 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields, } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
-const getCashierSessionsValidation = [validarJWT, validateFields];
-const getCashierSessionValidation = [validarJWT, validateFields];
-const postCashierSessionValidation = [validarJWT, validateFields];
+const getCashierSessionsValidation = [validateFields];
+const getCashierSessionValidation = [validateFields];
+const postCashierSessionValidation = [validateFields];
 
-const putCashierSessionValidation = [validarJWT, validateFields];
+const putCashierSessionValidation = [validateFields];
 
 const deleteCashierSessionValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	validateFields,
 ];
 

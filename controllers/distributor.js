@@ -1,19 +1,15 @@
 const { response } = require('express');
 const { Distributor } = require('../models');
-const { getTokenData } = require('../helpers');
+
 const { logger } = require('../helpers/logger');
 
 const getDistributors = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const distributors = await Distributor.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		res.status(200).json({
@@ -59,11 +55,7 @@ const getDistributor = async (req, res = response) => {
 const postDistributor = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const distributorDB = await Distributor.findOne({
 			businessName: body.businessName,
@@ -78,7 +70,7 @@ const postDistributor = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const distributor = new Distributor(data);

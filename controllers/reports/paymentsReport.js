@@ -10,17 +10,13 @@ const { ObjectId } = require('mongoose').Types;
 const paymentByLastXdayReport = async (req, res = response) => {
 	try {
 		const { days } = req.query;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const report = await Order.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 					deliveryDate: {
 						$gte: new Date(new Date().setDate(new Date().getDate() - +days)),
 					},

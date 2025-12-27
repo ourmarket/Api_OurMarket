@@ -1,19 +1,14 @@
 const { response } = require('express');
 const { Category } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getCategories = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const categories = await Category.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		}).populate('user', 'name');
 
 		return res.status(200).json({
@@ -55,16 +50,12 @@ const getCategory = async (req, res = response) => {
 const postCategory = async (req, res = response) => {
 	try {
 		const { name, img } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const categoryDB = await Category.findOne({
 			name,
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		if (categoryDB) {
@@ -81,7 +72,7 @@ const postCategory = async (req, res = response) => {
 			name,
 			img,
 			user: req.user,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const category = new Category(data);

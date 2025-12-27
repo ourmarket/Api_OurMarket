@@ -104,7 +104,7 @@ class Server {
 		this.app.use(this.paths.buscar, require('../routes/buscar'));
 		this.app.use(this.paths.categories, require('../routes/category'));
 		this.app.use(this.paths.brands, require('../routes/brand'));
-		this.app.use(this.paths.products, require('../routes/product'));
+		this.app.use(this.paths.products, require('../routes/product.route'));
 		this.app.use(this.paths.user, require('../routes/user'));
 		this.app.use(this.paths.uploads, require('../routes/uploads'));
 		this.app.use(this.paths.orders, require('../routes/orders'));

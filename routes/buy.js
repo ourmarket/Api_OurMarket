@@ -1,29 +1,23 @@
 const { Router } = require('express');
 const {
+	createBuy,
 	getBuys,
-	getBuy,
-	postBuy,
-	deleteBuy,
-	putBuy,
-} = require('../controllers/buy');
-const {
-	getBuysValidator,
-	getBuyValidator,
-	postBuyValidator,
-	putBuyValidator,
-	deleteBuyValidator,
-} = require('../validations/buy-validator');
+	getBuyById,
+	updateBuyPayment,
+	cancelBuy,
+} = require('../controllers/buy.controller');
 
 const router = Router();
 
 /**
  * {{url}}/api/buy
  */
+router.post('/', createBuy);
 
-router.get('/', getBuysValidator, getBuys);
-router.get('/:id', getBuyValidator, getBuy);
-router.post('/', postBuyValidator, postBuy);
-router.put('/:id', putBuyValidator, putBuy);
-router.delete('/:id', deleteBuyValidator, deleteBuy);
+router.get('/', getBuys);
+router.get('/:id', getBuyById);
+
+router.put('/:id/payment', updateBuyPayment);
+router.put('/:id/cancel', cancelBuy);
 
 module.exports = router;

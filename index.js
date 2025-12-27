@@ -12,11 +12,15 @@ const cron = require('node-cron');
 const bodyParser = require('body-parser');
 const { requestLogger, logger } = require('./helpers/logger');
 const requestIp = require('request-ip');
+const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
 
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const Sockets = require('./sockets/sockets');
+const { tenantMiddleware } = require('./middlewares/tenant');
+const { clerkAuth } = require('./middlewares/clerkAuth');
+const { appMiddleware } = require('./middlewares/appMiddleware');
 
 const io = require('socket.io')(server, {
 	cors: { origin: '*' },
@@ -80,19 +84,36 @@ app.use(function (req, res, next) {
 	);
 	next();
 });
+app.use('/api/imageKit', require('./routes/imageKit'));
+app.use('/api/scripts', require('./routes/scripts'));
 
+//clerk
+
+ app.use(
+	ClerkExpressRequireAuth({
+		unauthorizedHandler: (req, res) =>
+			res.status(401).json({ message: 'No autorizado' }),
+	})
+);
+
+//tenant
+app.use(appMiddleware);
+app.use(tenantMiddleware);
+
+//user auth clerk middleware
+app.use(clerkAuth);
+  
 // --------------Socket-------------
 Sockets(io);
 
 // -------------routes-----------
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/categories', require('./routes/category'));
-app.use('/api/products', require('./routes/product'));
+app.use('/api/products', require('./routes/product.route.js'));
 app.use('/api/user', require('./routes/user'));
 
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/suppliers', require('./routes/supplier'));
-app.use('/api/product_lot', require('./routes/productLot'));
 app.use('/api/oferts', require('./routes/ofert'));
 
 app.use('/api/delivery_zone', require('./routes/deliveryZone'));
@@ -109,7 +130,6 @@ app.use('/api/employees', require('./routes/employee'));
 
 app.use('/api/salaries', require('./routes/salary'));
 app.use('/api/sales', require('./routes/sale'));
-app.use('/api/imageKit', require('./routes/imageKit'));
 app.use('/api/reports', require('./routes/report'));
 app.use('/api/points', require('./routes/points'));
 app.use('/api/recommendation', require('./routes/recommendation'));
@@ -121,10 +141,15 @@ app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/superUser', require('./routes/superUser'));
 app.use('/api/cashierSession', require('./routes/cashierSession'));
 
-app.use('/api/buy', require('./routes/buy'));
 app.use('/api/stock', require('./routes/stock'));
 app.use('/api/negocios', require('./routes/negocio'));
 
+
+app.use('/api/dashboard', require('./routes/dashboard'));
+
+app.use('/api/buy', require('./routes/buy.routes.js'));
+app.use('/api/purchase-orders', require('./routes/purchaseOrder.routes.js'));
+app.use('/api/goods-receipt', require('./routes/goodsReceipt.routes.js'));
 // -----------error----------------
 app.use(
 	expressWinston.errorLogger({

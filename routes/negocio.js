@@ -6,7 +6,7 @@ const {
 	putNegocio,
 	deleteNegocio,
 } = require('../controllers/negocio');
-const verifyJWT = require('../middlewares/verifyJWT');
+
 
 const router = Router();
 
@@ -14,14 +14,14 @@ const router = Router();
  * {{url}}/api/negocios
  */
 
-router.get('/', verifyJWT, getNegocios);
+router.get('/', getNegocios);
 
-router.get('/:id', verifyJWT, getNegocio);
+router.get('/:id', getNegocio);
 
-router.post('/', verifyJWT, postNegocio);
+router.post('/', postNegocio);
 
-router.put('/:id', verifyJWT, putNegocio);
+router.put('/:id', putNegocio);
 
-router.delete('/:id', verifyJWT, deleteNegocio);
+router.delete('/:id', deleteNegocio);
 
 module.exports = router;

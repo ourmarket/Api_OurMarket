@@ -1,6 +1,7 @@
 const { check } = require('express-validator');
 const { existCategoryById } = require('../helpers');
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getCategoryValidation = [
 	check('id', 'No es un id de Mongo válido').isMongoId(),
@@ -8,21 +9,21 @@ const getCategoryValidation = [
 	validateFields,
 ];
 const postCategoryValidation = [
-	validarJWT,
+
 	check('name', 'El nombre es obligatorio').not().isEmpty(),
 	validateFields,
 ];
 
 const putCategoryValidation = [
-	validarJWT,
+
 	check('name', 'El nombre es obligatorio').not().isEmpty(),
 	check('id').custom(existCategoryById),
 	validateFields,
 ];
 
 const deleteCategoryValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existCategoryById),
 	validateFields,

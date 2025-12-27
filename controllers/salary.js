@@ -1,17 +1,12 @@
 const { response } = require('express');
 const { Salary } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getSalaries = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 		const { limit = 1000, from = 0 } = req.query;
-		const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const query = { state: true, superUser: req.tenant._id };
 
 		const [total, salaries] = await Promise.all([
 			Salary.countDocuments(query),
@@ -61,16 +56,12 @@ const getSalary = async (req, res = response) => {
 const postSalary = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const salary = new Salary(data);

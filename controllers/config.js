@@ -1,20 +1,15 @@
 const { response } = require('express');
 const { Config, Order, Client } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 const { ObjectId } = require('mongodb');
 
 const getConfig = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const config = await Config.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 		if (config.length === 0) {
 			return res.status(400).json({
@@ -41,14 +36,10 @@ const getConfig = async (req, res = response) => {
 const postConfig = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const existConfig = await Config.findOne({
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 			state: true,
 		});
 
@@ -66,7 +57,7 @@ const postConfig = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const newConfig = new Config(data);
@@ -99,14 +90,10 @@ const putConfig = async (req, res = response) => {
 			inactiveDays,
 		};
 
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const editConfig = await Config.findOneAndUpdate(
-			{ superUser: tokenData.UserInfo.superUser },
+			{ superUser: req.tenant._id },
 			data,
 			{ new: true }
 		);
@@ -127,14 +114,10 @@ const putConfig = async (req, res = response) => {
 };
 const setConfigActiveClient = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const config = await Config.find({
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		console.log(
@@ -147,7 +130,7 @@ const setConfigActiveClient = async (req, res = response) => {
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 					deliveryDate: {
 						$gte: new Date(
 							new Date().setDate(new Date().getDate() - config[0].inactiveDays)
@@ -164,7 +147,7 @@ const setConfigActiveClient = async (req, res = response) => {
 		]);
 
 		await Client.updateMany(
-			{ superUser: tokenData.UserInfo.superUser },
+			{ superUser: req.tenant._id },
 			{ $set: { active: false } }
 		);
 

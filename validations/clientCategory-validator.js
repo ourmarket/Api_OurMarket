@@ -1,29 +1,30 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const { existClientCategoryById } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getClientCategoryValidator = [
-	validarJWT,
+
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existClientCategoryById),
 	validateFields,
 ];
 const postClientCategoryValidator = [
-	validarJWT,
+
 	check('clientCategory', 'El nombre de la categoría es obligatorio')
 		.not()
 		.isEmpty(),
 	validateFields,
 ];
 const putClientCategoryValidator = [
-	validarJWT,
+
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existClientCategoryById),
 	validateFields,
 ];
 const deleteClientCategoryValidator = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existClientCategoryById),
 	validateFields,

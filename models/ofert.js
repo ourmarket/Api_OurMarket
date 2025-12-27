@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 const OfertSchema = Schema(
 	{
 		code: { type: Number },
-		product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+		product: { type: Schema.Types.ObjectId, ref: 'ProductLegacy', required: true },
 		description: { type: String },
 		visible: { type: Boolean, default: true },
 		ofert: { type: Boolean, default: false },

@@ -1,19 +1,18 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const {
 	existEmployeeById,
 	existUserById,
 	existEmployeeByDocket,
 } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getEmployeeValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existEmployeeById),
 	validateFields,
 ];
 const postEmployeeValidator = [
-	validarJWT,
 	check('userId', 'No es un id de Mongo válido').isMongoId(),
 	check('userId').custom(existUserById),
 	check('docket', 'El legajo es obligatorio').not().isEmpty(),
@@ -30,14 +29,12 @@ const postEmployeeValidator = [
 	validateFields,
 ];
 const putEmployeeValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existEmployeeById),
 	validateFields,
 ];
 const deleteEmployeeValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existEmployeeById),
 	validateFields,

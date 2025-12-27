@@ -4,23 +4,18 @@ const {
 	existPointsById,
 	existUserById,
 } = require('../helpers');
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
-const getAllRecommendationValidation = [
-	validarJWT,
-	isAdminRole,
-	validateFields,
-];
+const getAllRecommendationValidation = [hasRole('ADMIN_ROLE'), validateFields];
 const getAllRecommendationByClientValidation = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existClientById),
 	validateFields,
 ];
 const postRecommendationValidation = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('clientId', 'No es un id de Mongo válido').isMongoId(),
 	check('clientId').custom(existClientById),
 
@@ -34,16 +29,14 @@ const postRecommendationValidation = [
 ];
 
 const putRecommendationValidation = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existPointsById),
 	validateFields,
 ];
 
 const deleteRecommendationValidation = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existPointsById),
 	validateFields,

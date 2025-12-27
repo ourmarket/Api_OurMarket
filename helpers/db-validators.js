@@ -103,6 +103,7 @@ const existBrandById = async (id) => {
 const existProductById = async (id) => {
 	// Verificar si el correo existe
 	const existProduct = await Product.findById(id);
+	console.log(existProduct)
 	if (!existProduct) {
 		throw new Error(`El id no existe ${id}`);
 	}

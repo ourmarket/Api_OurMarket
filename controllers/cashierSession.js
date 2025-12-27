@@ -1,19 +1,12 @@
 const { response } = require('express');
 const { CashierSession, Order } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getCashierSessions = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const sessions = await CashierSession.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		})
 			.populate('role', 'role')
 			.populate('user', ['name', 'lastName', 'phone', 'email'])
@@ -86,16 +79,10 @@ const postCashierSession = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
 
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const session = new CashierSession(data);

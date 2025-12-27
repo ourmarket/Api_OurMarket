@@ -1,7 +1,6 @@
 /* eslint-disable eqeqeq */
 const { response } = require('express');
-const { Product, Ofert, Stock } = require('../models');
-const { getTokenData } = require('../helpers');
+const { ProductLegacy, Ofert, Stock } = require('../models');
 const { logger } = require('../helpers/logger');
 const { ObjectId } = require('mongodb');
 
@@ -11,20 +10,16 @@ const getProducts = async (req, res = response) => {
 	// 1= stock: number
 	// 2= stock: [{data}]
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const { limit = 100000, from = 0, stock = 0 } = req.query;
-		const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const query = { state: true, superUser: req.tenant._id };
 		const notShow = { brand: 0, description: 0, __v: 0, user: 0 };
 
 		if (+stock === 1) {
 			const [total, products] = await Promise.all([
-				Product.countDocuments(query),
-				Product.find(query)
+				ProductLegacy.countDocuments(query),
+				ProductLegacy.find(query)
 					.populate('user', 'name')
 					.populate('category', 'name')
 					.skip(Number(from))
@@ -36,7 +31,7 @@ const getProducts = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						stock: {
 							$gt: 0,
 						},
@@ -91,7 +86,7 @@ const getProducts = async (req, res = response) => {
 				{
 					$match: {
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						stock: {
 							$gt: 0,
 						},
@@ -166,8 +161,8 @@ const getProducts = async (req, res = response) => {
 		}
 		if (+stock === 2) {
 			const [total, products, stocks] = await Promise.all([
-				Product.countDocuments(query),
-				Product.find(query, notShow)
+				ProductLegacy.countDocuments(query),
+				ProductLegacy.find(query, notShow)
 					.populate('category', 'name')
 					.skip(Number(from))
 					.limit(Number(limit))
@@ -175,7 +170,7 @@ const getProducts = async (req, res = response) => {
 				Stock.find(
 					{
 						state: true,
-						superUser: new ObjectId(tokenData.UserInfo.superUser),
+						superUser: new ObjectId(req.tenant._id),
 						stock: {
 							$gt: 0,
 						},
@@ -213,8 +208,8 @@ const getProducts = async (req, res = response) => {
 		}
 
 		const [total, products] = await Promise.all([
-			Product.countDocuments(query),
-			Product.find(query)
+			ProductLegacy.countDocuments(query),
+			ProductLegacy.find(query)
 				.populate('user', 'name')
 				.populate('category', 'name')
 				.skip(Number(from))
@@ -241,7 +236,7 @@ const getProducts = async (req, res = response) => {
 const getProduct = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const product = await Product.findById(id)
+		const product = await ProductLegacy.findById(id)
 			.populate('user', 'name')
 			.populate('category', 'name');
 
@@ -259,20 +254,16 @@ const getProduct = async (req, res = response) => {
 const postProduct = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		// Generar la data a guardar
 		const data = {
 			...body,
 			user: req.user,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
-		const product = new Product(data);
+		const product = new ProductLegacy(data);
 
 		// Guardar DB
 		await product.save();
@@ -296,20 +287,20 @@ const putProduct = async (req, res = response) => {
 		data.user = req.user;
 
 		if (newStock) {
-			const productWithNewStock = await Product.findById(id);
+			const productWithNewStock = await ProductLegacy.findById(id);
 
 			const newData = {
 				stock: [...productWithNewStock.stock, newStock],
 			};
 
-			const product = await Product.findByIdAndUpdate(id, newData, {
+			const product = await ProductLegacy.findByIdAndUpdate(id, newData, {
 				new: true,
 			});
 
 			return res.json(product);
 		}
 
-		const product = await Product.findByIdAndUpdate(id, data, { new: true });
+		const product = await ProductLegacy.findByIdAndUpdate(id, data, { new: true });
 
 		res.json(product);
 	} catch (error) {
@@ -325,7 +316,7 @@ const putProduct = async (req, res = response) => {
 const deleteProduct = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		await Product.findByIdAndUpdate(id, { state: false }, { new: true });
+		await ProductLegacy.findByIdAndUpdate(id, { state: false }, { new: true });
 
 		await Ofert.updateMany({ product: id }, { state: false });
 
@@ -347,7 +338,7 @@ const createOrderStock = async (req, res = response) => {
 	const { totalQuantity } = req.body;
 	const { id } = req.params;
 	try {
-		const productEdit = await Product.findById(id);
+		const productEdit = await ProductLegacy.findById(id);
 
 		const stock = productEdit.stock;
 
@@ -415,7 +406,7 @@ const createOrderStock = async (req, res = response) => {
 			stock: updateStock(totalQuantity, stock),
 		};
 
-		const product = await Product.findByIdAndUpdate(id, productE, {
+		const product = await ProductLegacy.findByIdAndUpdate(id, productE, {
 			new: true,
 		});
 
@@ -442,7 +433,7 @@ const updateProductStock1 = async (req, res = response) => {
 	const { totalQuantity, stockId } = req.body;
 	const { id } = req.params;
 	try {
-		const productEdit = await Product.findById(id);
+		const productEdit = await ProductLegacy.findById(id);
 
 		const stock = productEdit.stock;
 
@@ -514,7 +505,7 @@ const updateProductStock1 = async (req, res = response) => {
 				stock: updateStock(totalQuantity, stock),
 			};
 
-			const product = await Product.findByIdAndUpdate(id, productE, {
+			const product = await ProductLegacy.findByIdAndUpdate(id, productE, {
 				new: true,
 			});
 
@@ -563,7 +554,7 @@ const updateProductStock1 = async (req, res = response) => {
 				stock: editStock,
 			};
 
-			const product = await Product.findByIdAndUpdate(id, productE, {
+			const product = await ProductLegacy.findByIdAndUpdate(id, productE, {
 				new: true,
 			});
 
@@ -598,7 +589,7 @@ const updateProductStock = async (req, res = response) => {
 	const { stockId, totalQuantity } = req.body;
 	const { id } = req.params;
 	try {
-		const productEdit = await Product.findById(id);
+		const productEdit = await ProductLegacy.findById(id);
 
 		const [stockToEdit] = productEdit.stock.filter(
 			(stock) => stock._id == stockId
@@ -615,7 +606,7 @@ const updateProductStock = async (req, res = response) => {
 			stock: [...restOfStock, stockToEdit],
 		};
 
-		const product = await Product.findByIdAndUpdate(id, productE, {
+		const product = await ProductLegacy.findByIdAndUpdate(id, productE, {
 			new: true,
 		});
 
@@ -639,15 +630,11 @@ const updateProductStock = async (req, res = response) => {
 const getOfertByProductId = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 		const ofert = await Ofert.findOne({
 			product: id,
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		}).populate('product', [
 			'name',
 			'description',
@@ -678,7 +665,7 @@ const getOfertByProductId = async (req, res = response) => {
 
 const deleteOldStock = async (req, res = response) => {
 	try {
-		const products = await Product.find();
+		const products = await ProductLegacy.find();
 		let count = 0;
 
 		for (let i = 0; i < products.length; i++) {
@@ -690,7 +677,7 @@ const deleteOldStock = async (req, res = response) => {
 			}
 			const id = products[i]._id;
 
-			await Product.findByIdAndUpdate(
+			await ProductLegacy.findByIdAndUpdate(
 				id,
 				{ stock: products[i].stock },
 				{ new: true }

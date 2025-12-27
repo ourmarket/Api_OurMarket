@@ -9,20 +9,13 @@ const {
 	User,
 } = require('../models');
 const bcryptjs = require('bcryptjs');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getClients = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const clients = await Client.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		})
 			.populate('clientCategory', ['clientCategory'])
 			.populate('user', ['name', 'lastName', 'phone', 'email'])
@@ -84,11 +77,6 @@ const getClient = async (req, res = response) => {
 const postClient = async (req, res = response) => {
 	try {
 		const { state, recommendation, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		const clientDB = await Client.findOne({ cuit: body.cuit });
 
@@ -104,7 +92,7 @@ const postClient = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const client = new Client(data);
@@ -244,15 +232,9 @@ const postSimpleClient = async (req, res = response) => {
 			address,
 		} = req.body;
 
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const existPhone = await User.findOne({
 			phone,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 		if (existPhone && existPhone[0]) {
 			logger.error({
@@ -266,7 +248,7 @@ const postSimpleClient = async (req, res = response) => {
 		}
 		const existEmail = await User.findOne({
 			email,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 		if (existEmail && existEmail[0]) {
 			logger.error({
@@ -291,7 +273,7 @@ const postSimpleClient = async (req, res = response) => {
 			phone,
 			email: email || '',
 			verified: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		// Guardar en BD
@@ -304,7 +286,7 @@ const postSimpleClient = async (req, res = response) => {
 			clientType,
 			cuit,
 			active: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		if (recommendation) {
@@ -338,7 +320,7 @@ const postSimpleClient = async (req, res = response) => {
 				lng: address?.lng || null,
 				client: client._id,
 				user: user._id,
-				superUser: tokenData.UserInfo.superUser,
+				superUser: req.tenant._id,
 			});
 
 			await addressNew.save();
@@ -413,15 +395,9 @@ const deleteSimpleClient = async (req, res = response) => {
 };
 const getClientQuantity = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const clients = await Client.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		return res.status(200).json({
@@ -446,124 +422,118 @@ const getClientQuantity = async (req, res = response) => {
  * GET /api/clients/search?name=palabra
  */
 const searchClients = async (req, res) => {
-    try {
-        const { name, lastName } = req.query;
-        const searchString = `${name || ''} ${lastName || ''}`.trim();
+	try {
+		const { name, lastName } = req.query;
+		const searchString = `${name || ''} ${lastName || ''}`.trim();
 
-        if (!searchString || searchString.length < 2) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'Debes enviar un nombre o apellido a buscar.',
-            });
-        }
+		if (!searchString || searchString.length < 2) {
+			return res.status(400).json({
+				ok: false,
+				msg: 'Debes enviar un nombre o apellido a buscar.',
+			});
+		}
 
-        // 1. Preparar expresiones regulares
-        const searchWords = searchString.split(/\s+/).filter(w => w.length > 0);
-        
-        // Expresión para coincidencia de CUALQUIER palabra (la menos estricta) -> /Diego|Flores/i
-        const looseRegex = new RegExp(searchWords.join('|'), 'i'); 
-        
-        // Expresión para coincidencia EXACTA de la frase completa
-        const exactPhraseRegex = new RegExp(`^${searchString}$`, 'i'); // Usamos ^$ para coincidencia de campo completo
+		// 1. Preparar expresiones regulares
+		const searchWords = searchString.split(/\s+/).filter((w) => w.length > 0);
 
-        let usuarios = [];
+		// Expresión para coincidencia de CUALQUIER palabra (la menos estricta) -> /Diego|Flores/i
+		const looseRegex = new RegExp(searchWords.join('|'), 'i');
 
-        // 🔎 FASE 1: Búsqueda Estricta (Frase Exacta en un solo campo)
-        // Busca usuarios cuyo campo 'name' o 'lastName' COINCIDA EXACTAMENTE con la frase completa.
-        usuarios = await User.find({
-            $and: [
-                {
-                    $or: [
-                        { name: exactPhraseRegex },
-                        { lastName: exactPhraseRegex }
-                    ]
-                },
-                { state: true },
-                { superUser: '654974527ae94fa111479ad5' }
-            ]
-        }).select('_id name lastName phone superUser').limit(10);
-        
-        // --- 2. Fases de Búsqueda Secuenciales ---
-        
-        if (usuarios.length === 0 && searchWords.length > 1) {
-            
-            // 🔎 FASE 2: Búsqueda Combinada (Todas las palabras presentes en Name + LastName)
-            // Esto resuelve el caso "Diego Flores" donde 'Diego' está en 'name' y 'Flores' en 'lastName'.
-            
-            // Creamos una condición $and para asegurar que CADA palabra del query esté en name O lastName.
-            const combinedConditions = searchWords.map(word => {
-                const wordRegex = new RegExp(word, 'i');
-                return { 
-                    $or: [
-                        { name: wordRegex }, 
-                        { lastName: wordRegex } 
-                    ] 
-                };
-            });
+		// Expresión para coincidencia EXACTA de la frase completa
+		const exactPhraseRegex = new RegExp(`^${searchString}$`, 'i'); // Usamos ^$ para coincidencia de campo completo
 
-            usuarios = await User.find({
-                $and: [
-                    ...combinedConditions, // Todas las palabras deben estar presentes
-                    { state: true },
-                    { superUser: '654974527ae94fa111479ad5' }
-                ]
-            }).select('_id name lastName phone superUser').limit(10);
-        }
+		let usuarios = [];
 
+		// 🔎 FASE 1: Búsqueda Estricta (Frase Exacta en un solo campo)
+		// Busca usuarios cuyo campo 'name' o 'lastName' COINCIDA EXACTAMENTE con la frase completa.
+		usuarios = await User.find({
+			$and: [
+				{
+					$or: [{ name: exactPhraseRegex }, { lastName: exactPhraseRegex }],
+				},
+				{ state: true },
+				{ superUser: '654974527ae94fa111479ad5' },
+			],
+		})
+			.select('_id name lastName phone superUser')
+			.limit(10);
 
-        if (usuarios.length === 0) {
-            
-            // 🔎 FASE 3: Búsqueda Flexible (Cualquier Palabra en Cualquier Campo)
-            // Solo se ejecuta si las Fases 1 y 2 no encontraron nada.
-            usuarios = await User.find({
-                $and: [
-                    {
-                        $or: [
-                            { name: looseRegex },
-                            { lastName: looseRegex }
-                        ]
-                    },
-                    { state: true },
-                    { superUser: '654974527ae94fa111479ad5' }
-                ]
-            }).select('_id name lastName phone superUser').limit(10);
-        }
-        
-        // --- 3. Procesamiento de Resultados ---
+		// --- 2. Fases de Búsqueda Secuenciales ---
 
-        if (usuarios.length === 0) {
-            return res.json({
-                ok: true,
-                results: [],
-            });
-        }
+		if (usuarios.length === 0 && searchWords.length > 1) {
+			// 🔎 FASE 2: Búsqueda Combinada (Todas las palabras presentes en Name + LastName)
+			// Esto resuelve el caso "Diego Flores" donde 'Diego' está en 'name' y 'Flores' en 'lastName'.
 
-        // extraemos IDs de usuarios
-        const usersIds = usuarios.map((u) => u._id);
+			// Creamos una condición $and para asegurar que CADA palabra del query esté en name O lastName.
+			const combinedConditions = searchWords.map((word) => {
+				const wordRegex = new RegExp(word, 'i');
+				return {
+					$or: [{ name: wordRegex }, { lastName: wordRegex }],
+				};
+			});
 
-        // Buscar clientes asociados a esos usuarios
-        const clientes = await Client.find({
-            user: { $in: usersIds },
-            state: true,
-        })
-            .populate('user', 'name lastName phone email')
-            .limit(10);
+			usuarios = await User.find({
+				$and: [
+					...combinedConditions, // Todas las palabras deben estar presentes
+					{ state: true },
+					{ superUser: '654974527ae94fa111479ad5' },
+				],
+			})
+				.select('_id name lastName phone superUser')
+				.limit(10);
+		}
 
-        return res.json({
-            ok: true,
-            count: clientes.length,
-            results: clientes.map((c) => ({
-                id: c._id,
-                nombre: `${c.user.name} ${c.user.lastName}`,
-            })),
-        });
-    } catch (error) {
-        console.error('Error en búsqueda de clientes:', error);
-        res.status(500).json({
-            ok: false,
-            msg: 'Error inesperado en el servidor.',
-        });
-    }
+		if (usuarios.length === 0) {
+			// 🔎 FASE 3: Búsqueda Flexible (Cualquier Palabra en Cualquier Campo)
+			// Solo se ejecuta si las Fases 1 y 2 no encontraron nada.
+			usuarios = await User.find({
+				$and: [
+					{
+						$or: [{ name: looseRegex }, { lastName: looseRegex }],
+					},
+					{ state: true },
+					{ superUser: '654974527ae94fa111479ad5' },
+				],
+			})
+				.select('_id name lastName phone superUser')
+				.limit(10);
+		}
+
+		// --- 3. Procesamiento de Resultados ---
+
+		if (usuarios.length === 0) {
+			return res.json({
+				ok: true,
+				results: [],
+			});
+		}
+
+		// extraemos IDs de usuarios
+		const usersIds = usuarios.map((u) => u._id);
+
+		// Buscar clientes asociados a esos usuarios
+		const clientes = await Client.find({
+			user: { $in: usersIds },
+			state: true,
+		})
+			.populate('user', 'name lastName phone email')
+			.limit(10);
+
+		return res.json({
+			ok: true,
+			count: clientes.length,
+			results: clientes.map((c) => ({
+				id: c._id,
+				nombre: `${c.user.name} ${c.user.lastName}`,
+			})),
+		});
+	} catch (error) {
+		console.error('Error en búsqueda de clientes:', error);
+		res.status(500).json({
+			ok: false,
+			msg: 'Error inesperado en el servidor.',
+		});
+	}
 };
 module.exports = {
 	postClient,

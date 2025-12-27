@@ -1,17 +1,13 @@
-const { getTokenData } = require('../helpers');
+
 const { logger } = require('../helpers/logger');
 const { Points, Client } = require('../models');
 const { response } = require('express');
 
 const getAllPoints = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 		const { limit = 100000, from = 0 } = req.query;
-		const query = { state: true, superUser: tokenData.UserInfo.superUser };
+		const query = { state: true, superUser: req.tenant._id };
 
 		const [total, points] = await Promise.all([
 			Points.countDocuments(query),
@@ -64,16 +60,12 @@ const postPoints = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
 
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const points = new Points(data);
@@ -151,19 +143,15 @@ const deletePoints = async (req, res = response) => {
 };
 const resetPoints = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		await Points.updateMany(
-			{ state: true, superUser: tokenData.UserInfo.superUser },
+			{ state: true, superUser: req.tenant._id },
 			{ state: false },
 			{ new: true }
 		);
 		await Client.updateMany(
-			{ state: true, superUser: tokenData.UserInfo.superUser },
+			{ state: true, superUser: req.tenant._id },
 			{ points: 0 },
 			{ new: true }
 		);

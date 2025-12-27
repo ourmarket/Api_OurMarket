@@ -13,11 +13,11 @@ module.exports = (io) => {
 		}
 
 		console.log(
-			`Una conexión de superUser: ${tokenData.UserInfo.superUserData.name} ${tokenData.UserInfo.superUserData.lastName} a socket.io => /orders/delivery`
+			`Una conexión de superUser: ${req.tenant._idData.name} ${req.tenant._idData.lastName} a socket.io => /orders/delivery`
 		);
 
 		socket.on('position', (data) => {
-			const superUser = tokenData.UserInfo.superUser;
+			const superUser = req.tenant._id;
 
 			if (data?.truckId && data.superUser === superUser) {
 				deliveryPosition.emit('delivery', data);
@@ -42,11 +42,11 @@ module.exports = (io) => {
 		}
 
 		console.log(
-			`Una conexión de superUser: ${tokenData.UserInfo.superUserData.name} ${tokenData.UserInfo.superUserData.lastName} a socket.io => /orders/cashier`
+			`Una conexión de superUser: ${req.tenant._idData.name} ${req.tenant._idData.lastName} a socket.io => /orders/cashier`
 		);
 
 		socket.on('order', async (data) => {
-			const superUser = tokenData.UserInfo.superUser;
+			const superUser = req.tenant._id;
 
 			if (data.superUser === superUser) {
 				console.log('CLIENTE EMITIÓ: ', data);

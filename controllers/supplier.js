@@ -1,20 +1,13 @@
 /* eslint-disable no-unused-vars */
 const { response } = require('express');
 const { Supplier } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getSuppliers = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const suppliers = await Supplier.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		}).sort({ businessName: 1 });
 
 		res.status(200).json({
@@ -59,11 +52,6 @@ const getSupplier = async (req, res = response) => {
 const postSupplier = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		const supplierDB = await Supplier.findOne({
 			businessName: body.businessName,
@@ -78,7 +66,7 @@ const postSupplier = async (req, res = response) => {
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const supplier = new Supplier(data);

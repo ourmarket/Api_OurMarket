@@ -1,19 +1,12 @@
 const { response } = require('express');
 const { Buy, Stock } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getBuys = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const buys = await Buy.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		})
 			.populate('supplier', 'businessName')
 			.sort({ createdAt: -1 });
@@ -64,17 +57,12 @@ const getBuy = async (req, res = response) => {
 const postBuy = async (req, res = response) => {
 	try {
 		const { state, products, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
 			...body,
 			products,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const buy = new Buy(data);
@@ -94,7 +82,7 @@ const postBuy = async (req, res = response) => {
 				stock: products[i].quantity,
 				createdStock: new Date(),
 				updateStock: null,
-				superUser: tokenData.UserInfo.superUser,
+				superUser: req.tenant._id,
 			};
 			const stock = new Stock(newStock);
 			// Guardar DB

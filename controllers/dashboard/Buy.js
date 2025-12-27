@@ -1,25 +1,17 @@
 /* eslint-disable no-dupe-keys */
 /* eslint-disable camelcase */
 const { response } = require('express');
-
 const { ObjectId } = require('mongodb');
-const { getTokenData } = require('../../helpers');
 const { logger } = require('../../helpers/logger');
 const { Buy } = require('../../models');
 
 const reportTotalBuy = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-
 		const report = await Buy.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 				},
 			},
 			{

@@ -1,12 +1,21 @@
 const { Schema, model } = require('mongoose');
 
-const OrderActiveSchema = new Schema(
+const OrderLegasySchema = new Schema(
 	{
-		userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+		//Para uso del TPV
+		userCashier: { type: Schema.Types.ObjectId, ref: 'User', default: null }, // id del usuario cajero
+		userSeller: { type: Schema.Types.ObjectId, ref: 'User', default: null }, // id del usuario vendedor
+		//----------
+
 		client: { type: Schema.Types.ObjectId, ref: 'Client' },
+		userId: { type: Schema.Types.ObjectId, ref: 'User' },
+		receiptId: { type: String },
+
+		cashierMode: { type: Boolean, default: false }, // true = enviado a caja
 
 		orderItems: [
 			{
+				uniqueId: { type: String },
 				productId: {
 					type: Schema.Types.ObjectId,
 					ref: 'Product',
@@ -20,11 +29,22 @@ const OrderActiveSchema = new Schema(
 				totalPrice: { type: Number, required: true },
 				unitPrice: { type: Number, required: true },
 				unitCost: { type: Number },
-				stockId: { type: String },
+				stockId: { type: String, default: null },
+				stockData: [
+					{
+						stockId: { type: String },
+						quantityOriginal: { type: Number },
+						quantityNew: { type: Number },
+						quantityModify: { type: Number },
+						unitCost: { type: Number },
+						dateStock: { type: Date },
+					},
+				],
 			},
 		],
 
 		shippingAddress: {
+			addressId: { type: Schema.Types.ObjectId, ref: 'ClientAddress' },
 			name: { type: String },
 			lastName: { type: String },
 			phone: { type: String },
@@ -46,7 +66,7 @@ const OrderActiveSchema = new Schema(
 		subTotal: { type: Number, required: true },
 		total: { type: Number, required: true },
 
-		status: { type: String, default: 'Pendiente' },
+		status: { type: String, default: 'Pendiente' }, // [ Pendiente, Entregado, Rechazado]
 		active: { type: Boolean, default: false },
 
 		commentary: { type: String },
@@ -73,6 +93,4 @@ const OrderActiveSchema = new Schema(
 	{ timestamps: true }
 );
 
-module.exports = model('OrderActive', OrderActiveSchema);
-
-/* TODO validar status */
+module.exports = model('OrderLegacy', OrderLegasySchema);

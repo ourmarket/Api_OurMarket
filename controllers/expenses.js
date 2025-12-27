@@ -1,19 +1,15 @@
 const { response } = require('express');
 const { Expenses } = require('../models');
-const { getTokenData } = require('../helpers');
+
 const { logger } = require('../helpers/logger');
 
 const getAllExpenses = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const expenses = await Expenses.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		});
 
 		return res.status(200).json({
@@ -59,16 +55,12 @@ const getExpenses = async (req, res = response) => {
 const postExpenses = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		// Generar la data a guardar
 		const data = {
 			...body,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const expenses = new Expenses(data);

@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 
 const SuperUserSchema = Schema(
 	{
-		clientId: { type: String, unique: true },
+		clientId: { type: String, unique: true }, // ejemplo: 'dr_01'
 		version: { type: String }, // [full, lite, dr]
 		superUserData: {
 			businessName: { type: String, required: true },

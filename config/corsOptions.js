@@ -1,15 +1,28 @@
 const allowedOrigins = require('./allowedOrigins');
 
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-            //console.log(">>>>>>>>>>>>>>>>",origin)
-            callback(null, true)
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    optionsSuccessStatus: 200
-}
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    const { hostname } = new URL(origin);
+
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost')
+    ) {
+      return callback(null, true);
+    }
+
+    const allowed = allowedOrigins.some(p =>
+      p.test(hostname)
+    );
+
+    if (allowed) return callback(null, true);
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+
 
 module.exports = corsOptions;

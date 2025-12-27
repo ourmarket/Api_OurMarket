@@ -1,4 +1,14 @@
 const allowedOrigins = [
+	/\.dashboard\.ourmarket\.com$/,
+	/\.tpv\.ourmarket\.com$/,
+	/\.delivery\.ourmarket\.com$/,
+	/\.admin\.ourmarket\.com$/,
+	/\.netlify\.app$/,
+];
+
+module.exports = allowedOrigins;
+
+/* const allowedOrigins = [
 	'https://dashboard-ourmarket.netlify.app',
 	'https://delivery-ourmarket.netlify.app',
 	'https://tpv-ourmarket.netlify.app',
@@ -17,6 +27,4 @@ const allowedOrigins = [
 	'http://localhost:5173',
 	'http://localhost:5174',
 	'https://preventa-ringoagromarket.netlify.app',
-];
-
-module.exports = allowedOrigins;
+]; */

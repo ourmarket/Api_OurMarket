@@ -1,36 +1,31 @@
 /* eslint-disable no-unreachable */
 const { response } = require('express');
-const { Order } = require('../../models');
-const { getTokenData } = require('../../helpers');
 const { logger } = require('../../helpers/logger');
 const { ObjectId } = require('mongoose').Types;
+const { Sale } = require('../../models');
 
 // ganancia y deuda por cliente
 
-const totalPaymentByClientReport = async (req, res = response) => {
+const clientTotalPaymentsReport = async (req, res = response) => {
 	try {
-		const { limit } = req.query;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		const { limit = 10 } = req.query;
 
-		const report = await Order.aggregate([
+		const report = await Sale.aggregate([
 			{
 				$match: {
-					state: true,
-					status: 'Entregado',
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
-					deliveryDate: {
-						$gt: new Date('Tue, 21 Mar 2023 03:00:00 GMT'),
+					superUser: new ObjectId(req.tenant._id),
+					saleDate: {
+						$gt: new Date('2023-03-21T03:00:00.000Z'),
 					},
 				},
 			},
 			{
+				$unwind: '$items',
+			},
+			{
 				$lookup: {
 					from: 'users',
-					localField: 'userId',
+					localField: 'user',
 					foreignField: '_id',
 					as: 'userOrder',
 				},
@@ -38,93 +33,43 @@ const totalPaymentByClientReport = async (req, res = response) => {
 			{
 				$lookup: {
 					from: 'clients',
-					localField: 'client',
+					localField: 'customer',
 					foreignField: '_id',
 					as: 'clientOrder',
 				},
 			},
+			{ $unwind: '$userOrder' },
+			{ $unwind: '$clientOrder' },
+
 			{
-				$unwind: {
-					path: '$orderItems',
-				},
-			},
-			{
-				$unwind: {
-					path: '$clientOrder',
-				},
-			},
-			{
-				$unwind: {
-					path: '$userOrder',
+				$group: {
+					_id: {
+						userId: '$userOrder._id',
+						clientId: '$clientOrder._id',
+						name: '$userOrder.name',
+						lastName: '$userOrder.lastName',
+						active: '$clientOrder.active',
+					},
+					totalBuy: { $sum: '$items.total' },
+					totalCost: { $sum: '$items.totalCost' },
+					ordersCount: { $sum: 1 },
 				},
 			},
 			{
 				$project: {
 					_id: 0,
-
-					client: 1,
-					userId: '$userOrder._id',
-					clientId: '$client',
-					name: '$userOrder.name',
-					lastName: '$userOrder.lastName',
-					totalBuy: '$orderItems.totalPrice',
-
-					active: '$clientOrder.active',
-					totalCost: {
-						$multiply: ['$orderItems.totalQuantity', '$orderItems.unitCost'],
-					},
-				},
-			},
-			{
-				$project: {
-					active: 1,
-					client: 1,
-					userId: 1,
-					name: 1,
-					lastName: 1,
+					userId: '$_id.userId',
+					clientId: '$_id.clientId',
+					name: '$_id.name',
+					lastName: '$_id.lastName',
+					active: '$_id.active',
 
 					totalBuy: 1,
 					totalCost: 1,
 					totalProfits: {
 						$subtract: ['$totalBuy', '$totalCost'],
 					},
-				},
-			},
-			{
-				$group: {
-					_id: {
-						userId: '$userId',
-						clientId: '$client',
-						name: '$name',
-						lastName: '$lastName',
-						active: '$active',
-					},
-					totalCost: {
-						$sum: '$totalCost',
-					},
-					totalBuy: {
-						$sum: '$totalBuy',
-					},
-					totalProfits: {
-						$sum: '$totalProfits',
-					},
-					ordersCount: {
-						$sum: 1, // Contar órdenes por cliente
-					},
-				},
-			},
-			{
-				$project: {
-					_id: 0,
-					totalBuy: 1,
-					totalCost: 1,
-					totalProfits: 1,
-					name: '$_id.name',
-					lastName: '$_id.lastName',
-					userId: '$_id.userId',
-					clientId: '$_id.clientId',
-					active: '$_id.active',
-					ordersCount: 1, // Incluir la cantidad de órdenes por cliente
+					ordersCount: 1,
 				},
 			},
 			{
@@ -146,8 +91,9 @@ const totalPaymentByClientReport = async (req, res = response) => {
 							client.name !== 'Caleb' &&
 							client.active
 					)
-					.slice(0, limit)
-					.sort((a, b) => b.totalProfits - a.totalProfits),
+					.sort((a, b) => b.totalProfits - a.totalProfits)
+					.slice(0, limit),
+
 				inactive: report
 					.filter(
 						(client) =>
@@ -155,8 +101,90 @@ const totalPaymentByClientReport = async (req, res = response) => {
 							client.name !== 'Caleb' &&
 							!client.active
 					)
-					.slice(0, limit)
-					.sort((a, b) => b.totalProfits - a.totalProfits),
+					.sort((a, b) => b.totalProfits - a.totalProfits)
+					.slice(0, limit),
+			},
+		});
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
+const clientTotalDebt = async (req, res = response) => {
+	try {
+		const report = await Sale.aggregate([
+			{
+				$match: {
+					paid: false,
+					superUser: new ObjectId(req.tenant._id),
+					'payment.debt': { $gt: 0 },
+				},
+			},
+
+			// 🔗 Sale → Client
+			{
+				$lookup: {
+					from: 'clients',
+					localField: 'customer',
+					foreignField: '_id',
+					as: 'client',
+				},
+			},
+			{ $unwind: '$client' },
+
+			// 🔗 Client → User
+			{
+				$lookup: {
+					from: 'users',
+					localField: 'client.user',
+					foreignField: '_id',
+					as: 'user',
+				},
+			},
+			{ $unwind: '$user' },
+
+			{
+				$group: {
+					_id: {
+						clientId: '$client._id',
+						name: '$user.name',
+						lastName: '$user.lastName',
+					},
+					totalDebt: { $sum: '$payment.debt' },
+					totalCash: { $sum: '$payment.cash' },
+					totalTransfer: { $sum: '$payment.transfer' },
+					totalUnpaidOrders: { $sum: 1 },
+				},
+			},
+
+			{
+				$project: {
+					_id: 0,
+					clientId: '$_id.clientId',
+					name: '$_id.name',
+					lastName: '$_id.lastName',
+					totalDebt: 1,
+					totalCash: 1,
+					totalTransfer: 1,
+					totalUnpaidOrders: 1,
+				},
+			},
+
+			{
+				$sort: { totalDebt: -1 },
+			},
+		]);
+
+		res.status(200).json({
+			ok: true,
+			status: 200,
+			total: report.length,
+			data: {
+				report,
 			},
 		});
 	} catch (error) {
@@ -170,5 +198,6 @@ const totalPaymentByClientReport = async (req, res = response) => {
 };
 
 module.exports = {
-	totalPaymentByClientReport,
+	clientTotalPaymentsReport,
+	clientTotalDebt,
 };

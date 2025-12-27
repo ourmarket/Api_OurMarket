@@ -1,15 +1,14 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check } = require('express-validator');
 const { existDeliveryZoneById } = require('../helpers');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getDeliveryZoneValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existDeliveryZoneById),
 	validateFields,
 ];
 const postDeliveryZoneValidator = [
-	validarJWT,
 	check('name', 'El nombre es obligatorio').not().isEmpty(),
 	check('cost', 'El costo es obligatorio').not().isEmpty(),
 	check('province', 'La provincia  es obligatoria').not().isEmpty(),
@@ -18,14 +17,12 @@ const postDeliveryZoneValidator = [
 	validateFields,
 ];
 const putDeliveryZoneValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existDeliveryZoneById),
 	validateFields,
 ];
 const deleteDeliveryZoneValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existDeliveryZoneById),
 	validateFields,

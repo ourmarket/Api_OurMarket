@@ -4,7 +4,7 @@ const StockSchema = Schema(
 	{
 		stockId: { type: String },
 		buy: { type: Schema.Types.ObjectId, ref: 'Buy' },
-		product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+		product: { type: Schema.Types.ObjectId, ref: 'ProductLegacy', required: true },
 		quantity: { type: Number },
 		cost: { type: Number },
 		unityCost: { type: Number },

@@ -1,33 +1,34 @@
 const { check } = require('express-validator');
 const { existRoleById } = require('../helpers');
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
+const { hasRole } = require('../middlewares/hasRole');
 
-const getRolesValidation = [validarJWT, isAdminRole, validateFields];
+const getRolesValidation = [hasRole('ADMIN_ROLE'), validateFields];
 const getRoleValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existRoleById),
 	validateFields,
 ];
 const postRoleValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('role', 'El rol es obligatorio').not().isEmpty(),
 	validateFields,
 ];
 
 const putRoleValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('role', 'El rol es obligatorio').not().isEmpty(),
 	check('id').custom(existRoleById),
 	validateFields,
 ];
 
 const deleteRoleValidation = [
-	validarJWT,
-	isAdminRole,
+
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existRoleById),
 	validateFields,

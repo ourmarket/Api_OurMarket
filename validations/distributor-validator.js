@@ -1,16 +1,15 @@
-const { validateFields, validarJWT, isAdminRole } = require('../middlewares');
+const { validateFields } = require('../middlewares');
 const { check, body } = require('express-validator');
 const { existDistributorById } = require('../helpers');
 const { Distributor } = require('../models');
+const { hasRole } = require('../middlewares/hasRole');
 
 const getDistributorValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existDistributorById),
 	validateFields,
 ];
 const postDistributorValidator = [
-	validarJWT,
 	check('businessName', 'La Razón Social es obligatoria').not().isEmpty(),
 	check('cuit', 'El CUIT es obligatorio').not().isEmpty(),
 	body('email')
@@ -34,14 +33,12 @@ const postDistributorValidator = [
 	validateFields,
 ];
 const putDistributorValidator = [
-	validarJWT,
 	check('id', 'No es un id de Mongo').isMongoId(),
 	check('id').custom(existDistributorById),
 	validateFields,
 ];
 const deleteDistributorValidator = [
-	validarJWT,
-	isAdminRole,
+	hasRole('ADMIN_ROLE'),
 	check('id', 'No es un id de Mongo válido').isMongoId(),
 	check('id').custom(existDistributorById),
 	validateFields,

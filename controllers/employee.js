@@ -1,19 +1,15 @@
 const { response } = require('express');
 const { Employee } = require('../models');
-const { getTokenData } = require('../helpers');
+
 const { logger } = require('../helpers/logger');
 
 const getEmployees = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const employees = await Employee.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		}).populate('role', 'role');
 
 		res.status(200).json({

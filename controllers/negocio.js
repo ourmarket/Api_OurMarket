@@ -1,18 +1,12 @@
 const { response } = require('express');
 const { Negocio } = require('../models');
-const { getTokenData } = require('../helpers');
 const { logger } = require('../helpers/logger');
 
 const getNegocios = async (req, res = response) => {
 	try {
-		const jwt = req.cookies.jwt_dashboard || req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
-		console.log('tokenData');
-		console.log(req.cookies.jwt_deliveryApp);
-
 		const negocios = await Negocio.find({
 			state: true,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		}).populate('cargadoPor');
 
 		return res.status(200).json({
@@ -71,11 +65,6 @@ const postNegocio = async (req, res = response) => {
 			lat,
 			lng,
 		} = req.body;
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
 
 		// Generar la data a guardar
 		const data = {
@@ -97,7 +86,7 @@ const postNegocio = async (req, res = response) => {
 			distribuidorActual,
 
 			cargadoPor: tokenData.UserInfo.id,
-			superUser: tokenData.UserInfo.superUser,
+			superUser: req.tenant._id,
 		};
 
 		const negocio = new Negocio(data);

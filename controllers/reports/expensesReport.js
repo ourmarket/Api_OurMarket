@@ -8,17 +8,13 @@ const { ObjectId } = require('mongoose').Types;
 // todos
 const getTotalExpensesReport = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const report = await Expenses.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 				},
 			},
 
@@ -63,17 +59,13 @@ const getTotalExpensesReport = async (req, res = response) => {
 // por mes
 const getByMonthExpensesReport = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const report = await Expenses.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 				},
 			},
 
@@ -125,17 +117,13 @@ const getByMonthExpensesReport = async (req, res = response) => {
 // por mes y categoria
 const getByMonthAndCategoryExpensesReport = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const report = await Expenses.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 				},
 			},
 
@@ -190,17 +178,13 @@ const getByMonthAndCategoryExpensesReport = async (req, res = response) => {
 // total por categoria
 const getTotalCategoryExpensesReport = async (req, res = response) => {
 	try {
-		const jwt =
-			req.cookies.jwt_dashboard ||
-			req.cookies.jwt_tpv ||
-			req.cookies.jwt_deliveryApp;
-		const tokenData = getTokenData(jwt);
+		
 
 		const report = await Expenses.aggregate([
 			{
 				$match: {
 					state: true,
-					superUser: new ObjectId(tokenData.UserInfo.superUser),
+					superUser: new ObjectId(req.tenant._id),
 				},
 			},
 
