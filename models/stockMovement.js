@@ -11,7 +11,6 @@
  * 5) Correcciones = movimiento compensatorio.
  */
 
-
 const { Schema, model } = require('mongoose');
 
 const StockMovementSchema = new Schema(
@@ -31,7 +30,7 @@ const StockMovementSchema = new Schema(
 		quantity: {
 			type: Number,
 			required: true,
-			// + entra | - sale
+			min: 0.0001, // 🔒 nunca cero ni negativa
 		},
 
 		type: {
@@ -52,7 +51,7 @@ const StockMovementSchema = new Schema(
 			type: Schema.Types.ObjectId,
 			required: true,
 			index: true,
-			// Buy._id | Order._id | Adjustment._id
+			// Buy._id | Sale._id | Adjustment._id | GoodsReceipt._id
 		},
 
 		createdBy: {

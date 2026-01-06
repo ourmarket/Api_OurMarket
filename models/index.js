@@ -34,7 +34,11 @@ const GoodsReceipt = require('./goodsReceipt');
 const PurchaseOrder = require('./purchaseOrder');
 const Counter = require('./counter');
 
+const BuySummary = require('./buySummary');
+const PurchaseAdjustment = require('./purchaseAdjustment');
+
 module.exports = {
+	PurchaseAdjustment,
 	Counter,
 	PurchaseOrder,
 	GoodsReceipt,
@@ -70,4 +74,5 @@ module.exports = {
 	Buy,
 	Stock,
 	Negocio,
+	BuySummary,
 };

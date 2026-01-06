@@ -1,6 +1,8 @@
 // services/purchaseFlow.service.js
 
-const { PurchaseOrder, Buy } = require('../models');
+const { PurchaseOrder, Buy, GoodsReceipt } = require('../models');
+const PurchaseAdjustmentService = require('./purchaseAdjustment.service');
+const StockService = require('./stock.service');
 
 class PurchaseFlowService {
 	/* ======================================================
@@ -9,7 +11,7 @@ class PurchaseFlowService {
 	static async createBuy(data) {
 		const {
 			code,
-			purchaseOrderId,
+			purchaseOrder,
 			items: itemsFromData,
 			supplier,
 			documentNumber,
@@ -20,8 +22,8 @@ class PurchaseFlowService {
 		} = data;
 
 		let items = itemsFromData || [];
-		if (purchaseOrderId) {
-			const po = await PurchaseOrder.findById(purchaseOrderId);
+		if (purchaseOrder) {
+			const po = await PurchaseOrder.findById(purchaseOrder);
 			if (!po) throw new Error('Purchase order not found');
 
 			items = po.items.map((item) => ({
@@ -45,7 +47,7 @@ class PurchaseFlowService {
 
 		const buy = new Buy({
 			code,
-			purchaseOrder: purchaseOrderId,
+			purchaseOrder: purchaseOrder,
 			supplier,
 			documentNumber,
 			date,
@@ -104,7 +106,8 @@ class PurchaseFlowService {
 		const validTransitions = {
 			DRAFT: ['SUBMITTED', 'CANCELLED'],
 			SUBMITTED: ['APPROVED', 'CANCELLED'],
-			APPROVED: ['CLOSED'],
+			APPROVED: ['EXECUTED'],
+			EXECUTED: ['CLOSED'],
 		};
 
 		if (!validTransitions[currentStatus]?.includes(nextStatus)) {
@@ -162,6 +165,122 @@ class PurchaseFlowService {
 
 		await po.save();
 		return po;
+	}
+	/* ======================================================
+	 * RECEIVE GOODS
+	 * ==================================== ================== */
+	static async receiveGoods({
+		code,
+		buyId,
+		supplier,
+		generalObservations,
+		items,
+		receivedBy,
+		receivedAt,
+		superUser,
+	}) {
+		const buy = await Buy.findById(buyId).populate('items.product');
+
+		console.log(buy);
+
+		if (!buy) throw new Error('Buy not found');
+
+		const receipt = await GoodsReceipt.create({
+			code,
+			buyId,
+			supplier,
+			generalObservations,
+			receivedBy,
+			receivedAt,
+			superUser,
+			items,
+		});
+
+		for (const item of items) {
+			const buyItem = buy.items.find((i) => i.product._id.equals(item.product));
+
+			if (!buyItem) {
+				throw new Error('Product not found in buy');
+			}
+
+			const expected = buyItem.quantity;
+			const received = item.quantityReceived;
+			const diff = received - expected;
+
+			// 1️⃣ Movimiento de stock (SIEMPRE)
+			await StockService.registerMovement({
+				product: item.product,
+				quantity: received,
+				type: 'IN',
+				reason: 'BUY',
+				reference: receipt._id,
+				createdBy: receivedBy,
+				superUser,
+			});
+
+			// 2️⃣ Ajuste SOLO si hay diferencia
+			if (diff !== 0) {
+				await PurchaseAdjustmentService.create({
+					buyId: buy._id,
+					product: item.product,
+					expectedQty: expected,
+					receivedQty: received,
+					difference: diff,
+					type: diff < 0 ? 'SHORTAGE' : 'OVERAGE',
+					observations: item.observations,
+					createdBy: receivedBy,
+				});
+			}
+		}
+
+		return receipt;
+	}
+
+	/* ======================================================
+	 * GET BUY DETAIL
+	 * ====================================================== */
+	static async getBuyDetail(buyId) {
+		const buy = await Buy.findById(buyId).lean();
+		if (!buy) throw new Error('Buy not found');
+
+		const receipts = await GoodsReceipt.find({ buy: buyId }).lean();
+
+		const orderedByProduct = {};
+		buy.items.forEach((i) => {
+			orderedByProduct[i.product.toString()] = i.quantity;
+		});
+
+		const receivedByProduct = {};
+		receipts.forEach((r) => {
+			r.items.forEach((i) => {
+				const key = i.product.toString();
+				receivedByProduct[key] =
+					(receivedByProduct[key] || 0) + i.quantityReceived;
+			});
+		});
+
+		const totalOrdered = Object.values(orderedByProduct).reduce(
+			(a, b) => a + b,
+			0
+		);
+		const totalReceived = Object.values(receivedByProduct).reduce(
+			(a, b) => a + b,
+			0
+		);
+
+		let receiptStatus = 'none';
+		if (totalReceived > 0 && totalReceived < totalOrdered) {
+			receiptStatus = 'partial';
+		}
+		if (totalReceived >= totalOrdered) {
+			receiptStatus = 'complete';
+		}
+
+		return {
+			...buy,
+			receipts,
+			receiptStatus,
+		};
 	}
 }
 

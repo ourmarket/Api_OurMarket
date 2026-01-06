@@ -1,20 +1,30 @@
 /**
  * GOODS RECEIPT (Recepción de Mercadería)
  * --------------------------------------
- * Representa la RECEPCIÓN FÍSICA de productos.
+ * Representa el INGRESO FÍSICO de productos para una COMPRA.
+ *
+ * CONCEPTO CLAVE:
+ * - La recepción NO es contable
+ * - La recepción NO define costos
+ * - La recepción NO genera deuda
  *
  * RESPONSABILIDADES:
- * - Registrar lo que efectivamente llegó
+ * - Registrar qué productos y cantidades llegaron
+ * - Permitir recepciones parciales o múltiples
  * - Impactar stock (+quantity)
- * - Permitir recepciones parciales
+ * - Servir como respaldo operativo / logístico
  *
- * REGLAS:
- * 1) NO define costos finales
- * 2) NO genera deuda
- * 3) Puede existir sin factura (Buy)
- * 4) Por cada item se genera StockMovement (+)
+ * REGLAS DE NEGOCIO:
+ * 1) Siempre está asociada a una Buy (Compra)
+ * 2) NO modifica la Buy ni sus totales
+ * 3) NO modifica pagos
+ * 4) Puede haber múltiples recepciones por Buy
+ * 5) Cada ítem genera movimientos de stock (+)
+ * 6) Es un documento histórico (no editable)
  */
+
 const { Schema, model } = require('mongoose');
+
 const GoodsReceiptSchema = new Schema(
 	{
 		code: {
@@ -22,18 +32,45 @@ const GoodsReceiptSchema = new Schema(
 			required: true,
 			unique: true,
 			index: true,
-		},
-		purchaseOrder: {
-			type: Schema.Types.ObjectId,
-			ref: 'PurchaseOrder',
+			// Ej: GR-000123
 		},
 
+		/**
+		 * COMPRA asociada
+		 * ----------------
+		 * Punto central del flujo:
+		 * La recepción se hace SOBRE la compra real,
+		 * no sobre la orden de compra.
+		 */
+		buyId: {
+			type: Schema.Types.ObjectId,
+			ref: 'Buy',
+			required: true,
+			index: true,
+		},
+
+		/**
+		 * Proveedor
+		 * ----------
+		 * Snapshot relacional.
+		 * Debe coincidir con buy.supplier
+		 */
 		supplier: {
 			type: Schema.Types.ObjectId,
 			ref: 'Supplier',
 			required: true,
 		},
 
+		/**
+		 * Ítems recibidos
+		 * ----------------
+		 * NO define precios.
+		 * SOLO cantidades efectivamente recibidas.
+		 */
+		generalObservations: {
+			type: String,
+			default: '',
+		},
 		items: [
 			{
 				product: {
@@ -47,29 +84,54 @@ const GoodsReceiptSchema = new Schema(
 					required: true,
 					min: 1,
 				},
+
+				observations: {
+					type: String,
+					default: '',
+				},
 			},
 		],
 
+		/**
+		 * Fecha efectiva de recepción
+		 * -----------------------------
+		 * Puede diferir de createdAt
+		 */
 		receivedAt: {
 			type: Date,
 			default: Date.now,
 		},
 
-		createdBy: {
+		/**
+		 * Usuario que registra la recepción
+		 */
+		receivedBy: {
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
 		},
 
+		/**
+		 * Tenant / SuperUser
+		 */
 		superUser: {
 			type: Schema.Types.ObjectId,
 			ref: 'SuperUser',
 			required: true,
+			index: true,
 		},
 
-		state: { type: Boolean, default: true },
+		/**
+		 * Soft delete
+		 */
+		state: {
+			type: Boolean,
+			default: true,
+		},
 	},
-	{ timestamps: true }
+	{
+		timestamps: true,
+	}
 );
 
 module.exports = model('GoodsReceipt', GoodsReceiptSchema);

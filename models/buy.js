@@ -27,6 +27,7 @@ const BuySchema = new Schema(
 		purchaseOrder: {
 			type: Schema.Types.ObjectId,
 			ref: 'PurchaseOrder',
+			required: false,
 		},
 
 		goodsReceipt: {

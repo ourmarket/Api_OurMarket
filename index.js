@@ -89,7 +89,7 @@ app.use('/api/scripts', require('./routes/scripts'));
 
 //clerk
 
- app.use(
+app.use(
 	ClerkExpressRequireAuth({
 		unauthorizedHandler: (req, res) =>
 			res.status(401).json({ message: 'No autorizado' }),
@@ -102,7 +102,7 @@ app.use(tenantMiddleware);
 
 //user auth clerk middleware
 app.use(clerkAuth);
-  
+
 // --------------Socket-------------
 Sockets(io);
 
@@ -144,12 +144,15 @@ app.use('/api/cashierSession', require('./routes/cashierSession'));
 app.use('/api/stock', require('./routes/stock'));
 app.use('/api/negocios', require('./routes/negocio'));
 
-
 app.use('/api/dashboard', require('./routes/dashboard'));
 
 app.use('/api/buy', require('./routes/buy.routes.js'));
 app.use('/api/purchase-orders', require('./routes/purchaseOrder.routes.js'));
-app.use('/api/goods-receipt', require('./routes/goodsReceipt.routes.js'));
+app.use('/api/goods-receipts', require('./routes/goodsReceipt.routes.js'));
+app.use(
+	'/api/purchase-adjustment',
+	require('./routes/purchaseAdjustment.routes.js')
+);
 // -----------error----------------
 app.use(
 	expressWinston.errorLogger({

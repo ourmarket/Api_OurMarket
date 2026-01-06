@@ -13,6 +13,13 @@ const { allowRoles } = require('../middlewares/allowRoles');
  * =========================
  */
 
+router.get(
+	'/summary',
+	allowApp(['dashboard']),
+	allowRoles('ADMIN_ROLE'),
+	BuyController.getPurchaseSummary
+);
+
 /**
  * Crear Buy
  * - Registra una compra / factura

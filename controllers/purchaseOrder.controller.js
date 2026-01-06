@@ -9,7 +9,13 @@ const PurchaseFlowService = require('../services/purchaseFlow.service');
  */
 const createPurchaseOrder = async (req, res) => {
 	try {
-		const { supplier, items = [], expectedDate } = req.body;
+		const { supplier, items = [], expectedDate, status, notes = '' } = req.body;
+
+		if (status !== 'DRAFT' && status !== 'SUBMITTED') {
+			return res.status(400).json({
+				message: 'Invalid status',
+			});
+		}
 
 		const code = await generateDocumentCode({
 			tenantId: req.tenant.clientId,
@@ -21,14 +27,15 @@ const createPurchaseOrder = async (req, res) => {
 			items,
 			expectedDate,
 			code,
-			status: 'DRAFT',
+			status,
 			statusHistory: [
 				{
-					status: 'DRAFT',
+					status,
 					changedBy: req.user._id,
 					changedAt: new Date(),
 				},
 			],
+			notes,
 			createdBy: req.user._id,
 			superUser: req.tenant._id,
 		});
@@ -55,10 +62,27 @@ const createPurchaseOrder = async (req, res) => {
 const getPurchaseOrders = async (req, res) => {
 	const { status, supplier } = req.query;
 
-	const filter = { state: true };
+	const filter = {
+		state: true,
+		superUser: req.tenant._id,
+	};
 
-	if (status) filter.status = status;
 	if (supplier) filter.supplier = supplier;
+
+	if (status) {
+		if (status === 'DRAFT') {
+			filter.status = 'DRAFT';
+			filter.createdBy = req.user._id;
+		} else {
+			filter.status = status;
+		}
+	} else {
+		// Retornar todas las órdenes, pero de las DRAFT solo las propias
+		filter.$or = [
+			{ status: { $ne: 'DRAFT' } },
+			{ status: 'DRAFT', createdBy: req.user._id },
+		];
+	}
 
 	const orders = await PurchaseOrder.find(filter)
 		.populate('supplier')
@@ -76,7 +100,7 @@ const getPurchaseOrderById = async (req, res) => {
 	const po = await PurchaseOrder.findById(req.params.id)
 		.populate('supplier')
 		.populate('items.product')
-		.populate('statusHistory.changedBy' ,['name',  'lastName']);
+		.populate('statusHistory.changedBy', ['name', 'lastName']);
 
 	if (!po) {
 		return res.status(404).json({

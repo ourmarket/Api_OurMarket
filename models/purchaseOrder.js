@@ -65,14 +65,28 @@ const PurchaseOrderSchema = new Schema(
 
 		status: {
 			type: String,
-			enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'CANCELLED', 'CLOSED'],
+			enum: [
+				'DRAFT',
+				'SUBMITTED',
+				'APPROVED',
+				'EXECUTED',
+				'CANCELLED',
+				'CLOSED',
+			],
 			default: 'DRAFT',
 		},
 		statusHistory: [
 			{
 				status: {
 					type: String,
-					enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'CANCELLED', 'CLOSED'],
+					enum: [
+						'DRAFT',
+						'SUBMITTED',
+						'APPROVED',
+						'EXECUTED',
+						'CANCELLED',
+						'CLOSED',
+					],
 					required: true,
 				},
 				changedAt: {
