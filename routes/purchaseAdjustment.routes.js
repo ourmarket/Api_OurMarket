@@ -22,7 +22,7 @@ router.get(
 	'/',
 	allowApp(['dashboard']),
 	allowRoles('ADMIN_ROLE'),
-	PurchaseAdjustmentController.getAdjustmentsByPurchase
+	PurchaseAdjustmentController.getAdjustments
 );
 
 router.get(

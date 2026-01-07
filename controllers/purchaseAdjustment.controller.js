@@ -65,11 +65,9 @@ exports.getAdjustmentsByPurchase = async (req, res, next) => {
  */
 exports.getAdjustmentById = async (req, res, next) => {
 	try {
-		const { adjustmentId } = req.params;
+		const { id } = req.params;
 
-		const adjustment = await PurchaseAdjustmentService.getAdjustmentById(
-			adjustmentId
-		);
+		const adjustment = await PurchaseAdjustmentService.getById(id);
 
 		if (!adjustment) {
 			return res.status(404).json({
@@ -83,20 +81,28 @@ exports.getAdjustmentById = async (req, res, next) => {
 	}
 };
 
-exports.getAdjustmentsByBuy = async (req, res) => {
+/**
+ * Obtener todos los ajustes del tenant
+ */
+exports.getAdjustments = async (req, res, next) => {
 	try {
-		const { buyId } = req.params;
-
-		const adjustments = await PurchaseAdjustment.find({
-			buy: buyId,
-			state: true,
-		})
-			.sort({ createdAt: -1 })
-			.select('code type totalAmount createdAt')
-			.lean();
-
+		const superUserId = req.tenant._id;
+		const adjustments = await PurchaseAdjustmentService.getAll(superUserId);
 		res.json(adjustments);
 	} catch (error) {
-		res.status(400).json({ message: error.message });
+		next(error);
+	}
+};
+
+/**
+ * Obtener ajustes por compra
+ */
+exports.getAdjustmentsByBuy = async (req, res, next) => {
+	try {
+		const { buyId } = req.params;
+		const adjustments = await PurchaseAdjustmentService.getByBuy(buyId);
+		res.json(adjustments);
+	} catch (error) {
+		next(error);
 	}
 };

@@ -30,6 +30,8 @@ class PurchaseAdjustmentService {
 		 * 1️⃣ Validar compra
 		 */
 		const buy = await Buy.findById(buyId);
+		//console.log('buy>>>>>>>>>>>', buy);
+		//console.log('items>>>>>>>>>>', items);
 
 		if (!buy) {
 			throw new Error('La compra no existe!!');
@@ -47,7 +49,8 @@ class PurchaseAdjustmentService {
 				throw new Error('La recepción de mercadería no existe');
 			}
 
-			if (goodsReceipt.buy.toString() !== buy._id.toString()) {
+			// El modelo GoodsReceipt usa buyId
+			if (goodsReceipt.buyId.toString() !== buy._id.toString()) {
 				throw new Error('La recepción no pertenece a la compra indicada');
 			}
 		}
@@ -59,9 +62,13 @@ class PurchaseAdjustmentService {
 		let totalAmount = 0;
 
 		for (const item of items) {
-			const buyItem = buy.items.find(
-				(i) => i.product.toString() === item.product.toString()
-			);
+			const buyItem = buy.items.find((i) => {
+				const idA = i.product._id
+					? i.product._id.toString()
+					: i.product.toString();
+				const idB = item.product.toString();
+				return idA === idB;
+			});
 
 			if (!buyItem) {
 				throw new Error('Uno de los productos no pertenece a la compra');
@@ -104,7 +111,7 @@ class PurchaseAdjustmentService {
 		const adjustment = await PurchaseAdjustment.create({
 			code,
 			type,
-			buy: buy._id,
+			buyId: buy._id,
 			supplier: buy.supplier,
 			goodsReceipt: goodsReceipt?._id,
 			items: calculatedItems,
@@ -114,7 +121,30 @@ class PurchaseAdjustmentService {
 			superUser: superUserId,
 		});
 
+		// 6️⃣ Registrar en el historial de la compra
+		buy.history.push({
+			action: 'ADJUSTMENT_LINKED',
+			description: `Ajuste vinculado con código ${code} (${type})`,
+			performedBy: userId,
+			meta: { totalAmount, adjustmentId: adjustment._id },
+		});
+		await buy.save();
+
 		return adjustment;
+	}
+
+	/**
+	 * Obtener todos los ajustes del tenant
+	 */
+	static async getAll(superUserId) {
+		return PurchaseAdjustment.find({
+			superUser: superUserId,
+			state: true,
+		})
+			.sort({ createdAt: -1 })
+			.populate('buyId', 'code')
+			.populate('supplier', 'businessName')
+			.populate('createdBy', 'name lastName');
 	}
 
 	/**
@@ -122,7 +152,7 @@ class PurchaseAdjustmentService {
 	 */
 	static async getByBuy(buyId) {
 		return PurchaseAdjustment.find({
-			buy: buyId,
+			buyId,
 			state: true,
 		})
 			.sort({ createdAt: -1 })
@@ -135,8 +165,8 @@ class PurchaseAdjustmentService {
 	 */
 	static async getById(adjustmentId) {
 		return PurchaseAdjustment.findById(adjustmentId)
-			.populate('buy', 'code total')
-			.populate('supplier', 'name')
+			.populate('buyId', 'code total')
+			.populate('supplier', 'businessName email phone address')
 			.populate('goodsReceipt', 'code')
 			.populate('createdBy', 'name lastName');
 	}
@@ -155,7 +185,7 @@ class PurchaseAdjustmentService {
 		}
 
 		const adjustments = await PurchaseAdjustment.find({
-			buy: buyId,
+			buyId,
 			state: true,
 		});
 

@@ -14,7 +14,78 @@
  * 3) total cerrado y persistido
  * 4) NO maneja stock directamente
  */
+
+/* | Acción              | Cuándo                          |
+| ------------------- | ------------------------------- |
+| `CREATED`           | Se crea la compra               |
+| `GOODS_RECEIVED`    | Se registra una recepción       |
+| `PARTIAL_RECEIPT`   | Recepción parcial               |
+| `PAYMENT_ADDED`     | Se registra un pago             |
+| `PAYMENT_REMOVED`   | Se elimina un pago              |
+| `STATUS_CHANGED`    | Cambio PENDING → PARTIAL → PAID |
+| `ADJUSTMENT_LINKED` | Ajuste automático vinculado     |
+| `DOCUMENT_ATTACHED` | Factura / remito                |
+| `CANCELLED`         | Anulación (si existe)           |
+| `NOTE_ADDED`        | Nota manual                     | */
+
 const { Schema, model } = require('mongoose');
+
+const BuyHistorySchema = new Schema(
+	{
+		action: {
+			type: String,
+			enum: [
+				'CREATED',
+				'GOODS_RECEIVED',
+				'PARTIAL_RECEIPT',
+				'PAYMENT_ADDED',
+				'PAYMENT_REMOVED',
+				'STATUS_CHANGED',
+				'ADJUSTMENT_LINKED',
+				'DOCUMENT_ATTACHED',
+				'NOTE_ADDED',
+				'CANCELLED',
+			],
+			required: true,
+		},
+
+		description: {
+			type: String,
+			required: true,
+		},
+
+		reference: {
+			model: {
+				type: String,
+				enum: ['GoodsReceipt', 'StockMovement', 'Payment', 'Document'],
+			},
+			id: {
+				type: Schema.Types.ObjectId,
+			},
+		},
+
+		meta: {
+			type: Schema.Types.Mixed,
+			default: {},
+			// Ej:
+			// { amount: 1000 }
+			// { quantities: [{ product, qty }] }
+			// { from: 'PENDING', to: 'PAID' }
+		},
+
+		performedBy: {
+			type: Schema.Types.ObjectId,
+			ref: 'User',
+			required: true,
+		},
+
+		performedAt: {
+			type: Date,
+			default: Date.now,
+		},
+	},
+	{ _id: false }
+);
 
 const BuySchema = new Schema(
 	{
@@ -99,6 +170,11 @@ const BuySchema = new Schema(
 			type: String,
 			enum: ['PENDING', 'PARTIAL', 'PAID'],
 			default: 'PENDING',
+		},
+
+		history: {
+			type: [BuyHistorySchema],
+			default: [],
 		},
 
 		createdBy: {

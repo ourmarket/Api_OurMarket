@@ -1,8 +1,7 @@
-// services/purchaseFlow.service.js
-
 const { PurchaseOrder, Buy, GoodsReceipt } = require('../models');
 const PurchaseAdjustmentService = require('./purchaseAdjustment.service');
 const StockService = require('./stock.service');
+const { generateDocumentCode } = require('./documentNumber.service');
 
 class PurchaseFlowService {
 	/* ======================================================
@@ -57,6 +56,13 @@ class PurchaseFlowService {
 			superUser,
 		});
 
+		// Registrar creación en historial
+		buy.history.push({
+			action: 'CREATED',
+			description: `Compra registrada con código ${code}`,
+			performedBy: createdBy,
+		});
+
 		await buy.save();
 		return buy;
 	}
@@ -78,8 +84,17 @@ class PurchaseFlowService {
 			createdBy: paidBy,
 		});
 
+		// Registrar el pago en el array de historial de la compra
+		buy.history.push({
+			action: 'PAYMENT_ADDED',
+			description: `Pago registrado por un monto de ${amount} (${paymentMethod})`,
+			performedBy: paidBy,
+			meta: { amount, paymentMethod, reference },
+		});
+
 		// Actualizar estado general de la compra
 		const totalPaid = buy.payments.reduce((acc, p) => acc + p.amount, 0);
+		const oldStatus = buy.status;
 
 		if (totalPaid >= buy.total) {
 			buy.status = 'PAID';
@@ -87,6 +102,15 @@ class PurchaseFlowService {
 			buy.status = 'PARTIAL';
 		} else {
 			buy.status = 'PENDING';
+		}
+
+		if (oldStatus !== buy.status) {
+			buy.history.push({
+				action: 'STATUS_CHANGED',
+				description: `Estado de la compra cambió de ${oldStatus} a ${buy.status}`,
+				performedBy: paidBy,
+				meta: { from: oldStatus, to: buy.status },
+			});
 		}
 
 		await buy.save();
@@ -181,8 +205,6 @@ class PurchaseFlowService {
 	}) {
 		const buy = await Buy.findById(buyId).populate('items.product');
 
-		console.log(buy);
-
 		if (!buy) throw new Error('Buy not found');
 
 		const receipt = await GoodsReceipt.create({
@@ -196,6 +218,8 @@ class PurchaseFlowService {
 			items,
 		});
 
+		const adjustmentItems = [];
+
 		for (const item of items) {
 			const buyItem = buy.items.find((i) => i.product._id.equals(item.product));
 
@@ -207,7 +231,7 @@ class PurchaseFlowService {
 			const received = item.quantityReceived;
 			const diff = received - expected;
 
-			// 1️⃣ Movimiento de stock (SIEMPRE)
+			// 1️⃣ Movimiento de stock (SIEMPRE por lo recibido)
 			await StockService.registerMovement({
 				product: item.product,
 				quantity: received,
@@ -218,21 +242,49 @@ class PurchaseFlowService {
 				superUser,
 			});
 
-			// 2️⃣ Ajuste SOLO si hay diferencia
-			if (diff !== 0) {
-				await PurchaseAdjustmentService.create({
-					buyId: buy._id,
+			// 2️⃣ Coleccionar para Ajuste SOLO si es FALTANTE (diff < 0)
+			// El modelo solo soporta ajustes negativos (Notas de Crédito)
+			if (diff < 0) {
+				adjustmentItems.push({
 					product: item.product,
-					expectedQty: expected,
-					receivedQty: received,
-					difference: diff,
-					type: diff < 0 ? 'SHORTAGE' : 'OVERAGE',
-					observations: item.observations,
-					createdBy: receivedBy,
+					quantity: Math.abs(diff), // Cantidad faltante
+					unitAmount: buyItem.unitCost,
+					reason: item.observations || 'Faltante en recepción',
 				});
 			}
 		}
 
+		// 3️⃣ Crear Ajuste Agregado si hay faltantes
+		if (adjustmentItems.length > 0) {
+			const adjCode = await generateDocumentCode({
+				tenantId: superUser, // superUser es el ID aquí
+				prefix: 'AJU',
+			});
+
+			await PurchaseAdjustmentService.create({
+				code: adjCode,
+				buyId: buy._id,
+				type: 'SHORTAGE',
+				reason: `Ajuste automático por faltantes en recepción ${code}`,
+				items: adjustmentItems,
+				goodsReceiptId: receipt._id,
+				userId: receivedBy,
+				superUserId: superUser,
+			});
+		}
+
+		// 4️⃣ Registrar recepción en el historial de la compra
+		buy.history.push({
+			action: 'GOODS_RECEIVED',
+			description: `Recepción de mercadería registrada con código ${code}`,
+			performedBy: receivedBy,
+			reference: {
+				model: 'GoodsReceipt',
+				id: receipt._id,
+			},
+		});
+
+		await buy.save();
 		return receipt;
 	}
 

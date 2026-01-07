@@ -150,7 +150,7 @@ app.use('/api/buy', require('./routes/buy.routes.js'));
 app.use('/api/purchase-orders', require('./routes/purchaseOrder.routes.js'));
 app.use('/api/goods-receipts', require('./routes/goodsReceipt.routes.js'));
 app.use(
-	'/api/purchase-adjustment',
+	'/api/purchase-adjustments',
 	require('./routes/purchaseAdjustment.routes.js')
 );
 // -----------error----------------

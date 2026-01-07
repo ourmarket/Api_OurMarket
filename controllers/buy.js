@@ -34,7 +34,8 @@ const getBuy = async (req, res = response) => {
 		const { id } = req.params;
 		const buy = await Buy.findById(id)
 			.populate('supplier', 'businessName')
-			.populate('user', ['name', 'lastName', 'phone', 'email']);
+			.populate('createdBy', ['name', 'lastName', 'phone', 'email'])
+			.populate('history.performedBy', ['name', 'lastName']);
 
 		res.status(200).json({
 			ok: true,
@@ -63,9 +64,17 @@ const postBuy = async (req, res = response) => {
 			...body,
 			products,
 			superUser: req.tenant._id,
+			createdBy: req.user._id,
 		};
 
 		const buy = new Buy(data);
+
+		// Registrar creación en el historial
+		buy.history.push({
+			action: 'CREATED',
+			description: `Compra creada con código ${buy.code}`,
+			performedBy: req.user._id,
+		});
 
 		// agregar STOCK
 

@@ -1,4 +1,47 @@
+/**
+ * Stock
+ * -----
+ * Snapshot del estado actual del stock por producto.
+ * Derivado EXCLUSIVAMENTE de StockMovement.
+ */
+
 const { Schema, model } = require('mongoose');
+
+const StockSchema = new Schema(
+	{
+		product: {
+			type: Schema.Types.ObjectId,
+			ref: 'Product',
+			required: true,
+			unique: true,
+			index: true,
+		},
+
+		quantityAvailable: {
+			type: Number,
+			required: true,
+			default: 0,
+		},
+
+		quantityReserved: {
+			type: Number,
+			required: true,
+			default: 0,
+		},
+
+		superUser: {
+			type: Schema.Types.ObjectId,
+			ref: 'SuperUser',
+			required: true,
+			index: true,
+		},
+	},
+	{ timestamps: true }
+);
+
+module.exports = model('Stock', StockSchema);
+
+/* const { Schema, model } = require('mongoose');
 
 const StockSchema = Schema(
 	{
@@ -26,4 +69,4 @@ StockSchema.methods.toJSON = function () {
 	return data;
 };
 
-module.exports = model('Stock', StockSchema);
+module.exports = model('Stock', StockSchema); */

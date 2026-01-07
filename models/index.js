@@ -36,8 +36,12 @@ const Counter = require('./counter');
 
 const BuySummary = require('./buySummary');
 const PurchaseAdjustment = require('./purchaseAdjustment');
+const Warehouse = require('./warehouse');
+const InventoryAdjustment = require('./inventoryAdjustment');
 
 module.exports = {
+	Warehouse,
+	InventoryAdjustment,
 	PurchaseAdjustment,
 	Counter,
 	PurchaseOrder,

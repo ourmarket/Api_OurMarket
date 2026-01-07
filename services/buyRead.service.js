@@ -1,4 +1,4 @@
-const { Buy, GoodsReceipt } = require('../models');
+const { Buy, GoodsReceipt, PurchaseAdjustment } = require('../models');
 
 class BuyReadService {
 	static async getBuyDetail(buyId) {
@@ -6,6 +6,7 @@ class BuyReadService {
 			.populate('supplier')
 			.populate('purchaseOrder')
 			.populate('payments.createdBy', ['name', 'lastName'])
+			.populate('history.performedBy', ['name', 'lastName'])
 			.lean();
 
 		if (!buy) {
@@ -14,6 +15,10 @@ class BuyReadService {
 
 		const receipts = await GoodsReceipt.find({ buyId })
 			.populate('receivedBy', ['name', 'lastName'])
+			.lean();
+
+		const adjustments = await PurchaseAdjustment.find({ buyId, state: true })
+			.populate('createdBy', ['name', 'lastName'])
 			.lean();
 
 		// -----------------------------
@@ -53,6 +58,7 @@ class BuyReadService {
 		return {
 			...buy,
 			receipts,
+			adjustments,
 			receiptStatus,
 		};
 	}
