@@ -54,29 +54,21 @@ const getProduct = async (req, res = response) => {
 	}
 };
 
+const ProductService = require('../services/product.service');
+
 const postProduct = async (req, res = response) => {
 	try {
-		const { state, ...body } = req.body;
-
-		// Generar la data a guardar
-		const data = {
-			...body,
-			createdBy: req.user,
-			lastUpdatedBy: req.user,
-			superUser: req.tenant._id,
-		};
-
-		const product = new Product(data);
-
-		// Guardar DB
-		await product.save();
-
+		const product = await ProductService.createProduct(
+			req.body,
+			req.user._id,
+			req.tenant._id
+		);
 		res.status(200).json(product);
 	} catch (error) {
 		logger.error(error);
-		res.status(500).json({
+		res.status(400).json({
 			ok: false,
-			status: 500,
+			status: 400,
 			msg: error.message,
 		});
 	}
@@ -85,18 +77,34 @@ const postProduct = async (req, res = response) => {
 const putProduct = async (req, res = response) => {
 	try {
 		const { id } = req.params;
-		const { state, ...data } = req.body;
-
-		const dataUpdate = {
-			...data,
-			lastUpdatedBy: req.user,
-		};
-
-		const product = await Product.findByIdAndUpdate(id, dataUpdate, {
-			new: true,
-		});
-
+		const product = await ProductService.updateProduct(
+			id,
+			req.body,
+			req.user._id,
+			req.tenant._id
+		);
 		res.json(product);
+	} catch (error) {
+		logger.error(error);
+		res.status(400).json({
+			ok: false,
+			status: 400,
+			msg: error.message,
+		});
+	}
+};
+
+const getProductHistory = async (req, res = response) => {
+	try {
+		const { id } = req.params;
+		const { page, limit } = req.query;
+		const history = await ProductService.getProductHistory(
+			id,
+			req.tenant._id,
+			parseInt(page) || 1,
+			parseInt(limit) || 20
+		);
+		res.json(history);
 	} catch (error) {
 		logger.error(error);
 		res.status(500).json({
@@ -316,6 +324,7 @@ module.exports = {
 	postProduct,
 	putProduct,
 	deleteProduct,
+	getProductHistory,
 	reportTotalIndividualProduct,
 	reportTotalIndividualProductLast30days,
 };

@@ -14,6 +14,7 @@ const {
 	postProduct,
 	putProduct,
 	deleteProduct,
+	getProductHistory,
 	reportTotalIndividualProduct,
 	reportTotalIndividualProductLast30days,
 } = require('../controllers/product.controller');
@@ -27,6 +28,12 @@ router.get(
 	allowRoles('ADMIN_ROLE'),
 	getProductValidator,
 	getProduct
+);
+router.get(
+	'/:id/history',
+	allowApp(['dashboard']),
+	allowRoles('ADMIN_ROLE'),
+	getProductHistory
 );
 
 router.post(
@@ -67,4 +74,3 @@ router.get(
 );
 
 module.exports = router;
-

@@ -38,8 +38,10 @@ const BuySummary = require('./buySummary');
 const PurchaseAdjustment = require('./purchaseAdjustment');
 const Warehouse = require('./warehouse');
 const InventoryAdjustment = require('./inventoryAdjustment');
+const ProductAuditLog = require('./productAuditLog');
 
 module.exports = {
+	ProductAuditLog,
 	Warehouse,
 	InventoryAdjustment,
 	PurchaseAdjustment,
