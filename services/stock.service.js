@@ -220,21 +220,6 @@ class StockService {
 			$expr: { $gte: ['$stockAvailable', '$minStock'] },
 		});
 
-		// DEBUG: Ver productos considerados NORMAL
-		const normalProducts = await Product.find({
-			superUser,
-			state: true,
-			stockAvailable: { $gt: 0 },
-			$expr: { $gte: ['$stockAvailable', '$minStock'] },
-		}).select('name stockAvailable minStock');
-		console.log('--- PRODUCTOS NORMALES ---');
-		normalProducts.forEach((p) =>
-			console.log(
-				`Nombre: ${p.name} | Disponible: ${p.stockAvailable} | Minimo: ${p.minStock}`
-			)
-		);
-		console.log('--------------------------');
-
 		// Total físico sumando todas las unidades disponibles
 		const totalStockUnitsAggregation = await Stock.aggregate([
 			{ $match: { superUser: new mongoose.Types.ObjectId(superUser) } },
@@ -292,6 +277,7 @@ class StockService {
 	static async getStockMovements({
 		superUser,
 		productId,
+		search,
 		type,
 		reason,
 		startDate,
@@ -302,7 +288,23 @@ class StockService {
 		const skip = (page - 1) * limit;
 		const filter = { superUser };
 
-		if (productId) filter.product = productId;
+		if (productId) {
+			filter.product = productId;
+		}
+
+		if (search && !productId) {
+			const productIdsArr = await Product.find({
+				superUser,
+				$or: [{ name: { $regex: search, $options: 'i' } }],
+			}).distinct('_id');
+
+			if (productIdsArr.length === 0) {
+				return { data: [], total: 0, page, limit };
+			}
+
+			filter.product = { $in: productIdsArr };
+		}
+
 		if (type) filter.type = type;
 		if (reason) filter.reason = reason;
 
@@ -312,22 +314,18 @@ class StockService {
 			if (endDate) filter.createdAt.$lte = new Date(endDate);
 		}
 
-		const movements = await StockMovement.find(filter)
-			.populate('product', 'name img')
-			.populate('createdBy', 'name lastName')
-			.sort({ createdAt: -1 })
-			.skip(skip)
-			.limit(limit)
-			.lean();
+		const [movements, total] = await Promise.all([
+			StockMovement.find(filter)
+				.populate('product', 'name img')
+				.populate('createdBy', 'name lastName')
+				.sort({ createdAt: -1 })
+				.skip(skip)
+				.limit(limit)
+				.lean(),
+			StockMovement.countDocuments(filter),
+		]);
 
-		const total = await StockMovement.countDocuments(filter);
-
-		return {
-			data: movements,
-			total,
-			page,
-			limit,
-		};
+		return { data: movements, total, page, limit };
 	}
 
 	/**

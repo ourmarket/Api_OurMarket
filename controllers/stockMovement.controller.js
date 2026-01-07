@@ -6,13 +6,14 @@ const StockService = require('../services/stock.service');
  */
 exports.getStockMovements = async (req, res) => {
 	try {
-		const { productId, type, reason, startDate, endDate, page, limit } =
+		const { search, productId, type, reason, startDate, endDate, page, limit } =
 			req.query;
 		const superUser = req.tenant._id;
 
 		const result = await StockService.getStockMovements({
 			superUser,
 			productId,
+			search,
 			type,
 			reason,
 			startDate,

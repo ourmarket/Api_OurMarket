@@ -15,13 +15,13 @@ const { calculateReceiptStatus } = require('../services/receiptStatus.service');
 exports.createBuy = async (req, res) => {
 	try {
 		const purchaseOrder = await PurchaseOrder.findById(req.body.purchaseOrder);
-		if (!purchaseOrder) {
+		/* if (!purchaseOrder) {
 			return res.status(404).json({ message: 'Orden de compra no encontrada' });
-		}
-		if (purchaseOrder.status !== 'APPROVED') {
+		} */
+		if (purchaseOrder && purchaseOrder.status !== 'APPROVED') {
 			return res.status(400).json({ message: 'Orden de compra no aprobada' });
 		}
-		if (purchaseOrder.purchaseOrder) {
+		if (purchaseOrder && purchaseOrder.purchaseOrder) {
 			return res
 				.status(400)
 				.json({ message: 'Orden de compra ya tiene una compra' });
@@ -32,7 +32,7 @@ exports.createBuy = async (req, res) => {
 		});
 		const buy = await PurchaseFlowService.createBuy({
 			code,
-			purchaseOrder: req.body.purchaseOrder,
+			purchaseOrder: req.body.purchaseOrder || null,
 			items: req.body.items,
 			supplier: req.body.supplier,
 			documentNumber: req.body.documentNumber,
