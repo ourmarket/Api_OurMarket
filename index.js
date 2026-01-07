@@ -141,7 +141,12 @@ app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/superUser', require('./routes/superUser'));
 app.use('/api/cashierSession', require('./routes/cashierSession'));
 
-app.use('/api/stock', require('./routes/stock'));
+app.use('/api/stock', require('./routes/stock.routes.js'));
+app.use('/api/stock-movements', require('./routes/stockMovement.routes.js'));
+app.use(
+	'/api/stock-adjustments',
+	require('./routes/stockAdjustment.routes.js')
+);
 app.use('/api/negocios', require('./routes/negocio'));
 
 app.use('/api/dashboard', require('./routes/dashboard'));

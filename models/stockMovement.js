@@ -15,6 +15,12 @@ const { Schema, model } = require('mongoose');
 
 const StockMovementSchema = new Schema(
 	{
+		code: {
+			type: String,
+			required: true,
+			unique: true,
+			index: true,
+		},
 		meta: {
 			migration: { type: Boolean, default: false },
 			source: { type: String },

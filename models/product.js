@@ -117,6 +117,18 @@ const ProductSchema = new Schema(
 			index: true,
 		},
 
+		/**
+		 * Punto de reposición (Stock Mínimo)
+		 */
+		minStock: {
+			type: Number,
+			default: 0,
+		},
+		maxStock: {
+			type: Number,
+			default: 0,
+		},
+
 		/* =========================
 		 * AUDITORÍA
 		 * ========================= */

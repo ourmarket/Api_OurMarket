@@ -194,7 +194,8 @@ class PurchaseFlowService {
 	 * RECEIVE GOODS
 	 * ==================================== ================== */
 	static async receiveGoods({
-		code,
+		stockCode,
+		receiptCode,
 		buyId,
 		supplier,
 		generalObservations,
@@ -203,89 +204,97 @@ class PurchaseFlowService {
 		receivedAt,
 		superUser,
 	}) {
-		const buy = await Buy.findById(buyId).populate('items.product');
+		try {
+			const buy = await Buy.findById(buyId).populate('items.product');
 
-		if (!buy) throw new Error('Buy not found');
+			if (!buy) throw new Error('Buy not found');
 
-		const receipt = await GoodsReceipt.create({
-			code,
-			buyId,
-			supplier,
-			generalObservations,
-			receivedBy,
-			receivedAt,
-			superUser,
-			items,
-		});
-
-		const adjustmentItems = [];
-
-		for (const item of items) {
-			const buyItem = buy.items.find((i) => i.product._id.equals(item.product));
-
-			if (!buyItem) {
-				throw new Error('Product not found in buy');
-			}
-
-			const expected = buyItem.quantity;
-			const received = item.quantityReceived;
-			const diff = received - expected;
-
-			// 1️⃣ Movimiento de stock (SIEMPRE por lo recibido)
-			await StockService.registerMovement({
-				product: item.product,
-				quantity: received,
-				type: 'IN',
-				reason: 'BUY',
-				reference: receipt._id,
-				createdBy: receivedBy,
+			const receipt = await GoodsReceipt.create({
+				code: receiptCode,
+				buyId,
+				supplier,
+				generalObservations,
+				receivedBy,
+				receivedAt,
 				superUser,
+				items,
 			});
 
-			// 2️⃣ Coleccionar para Ajuste SOLO si es FALTANTE (diff < 0)
-			// El modelo solo soporta ajustes negativos (Notas de Crédito)
-			if (diff < 0) {
-				adjustmentItems.push({
+			const adjustmentItems = [];
+
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i];
+				const buyItem = buy.items.find((i) =>
+					i.product._id.equals(item.product)
+				);
+
+				if (!buyItem) {
+					throw new Error('Product not found in buy');
+				}
+
+				const expected = buyItem.quantity;
+				const received = item.quantityReceived;
+				const diff = received - expected;
+
+				// 1️⃣ Movimiento de stock (SIEMPRE por lo recibido)
+				await StockService.registerMovement({
+					stockCode: items.length > 1 ? `${stockCode}-${i + 1}` : stockCode,
 					product: item.product,
-					quantity: Math.abs(diff), // Cantidad faltante
-					unitAmount: buyItem.unitCost,
-					reason: item.observations || 'Faltante en recepción',
+					quantity: received,
+					type: 'IN',
+					reason: 'BUY',
+					reference: buyId,
+					createdBy: receivedBy,
+					superUser,
+				});
+
+				// 2️⃣ Coleccionar para Ajuste SOLO si es FALTANTE (diff < 0)
+				// El modelo solo soporta ajustes negativos (Notas de Crédito)
+				if (diff < 0) {
+					adjustmentItems.push({
+						product: item.product,
+						quantity: Math.abs(diff), // Cantidad faltante
+						unitAmount: buyItem.unitCost,
+						reason: item.observations || 'Faltante en recepción',
+					});
+				}
+			}
+
+			// 3️⃣ Crear Ajuste Agregado si hay faltantes
+			if (adjustmentItems.length > 0) {
+				const adjCode = await generateDocumentCode({
+					tenantId: superUser, // superUser es el ID aquí
+					prefix: 'AJU',
+				});
+
+				await PurchaseAdjustmentService.create({
+					code: adjCode,
+					buyId: buy._id,
+					type: 'SHORTAGE',
+					reason: `Ajuste automático por faltantes en recepción ${receiptCode}`,
+					items: adjustmentItems,
+					goodsReceiptId: receipt._id,
+					userId: receivedBy,
+					superUserId: superUser,
 				});
 			}
-		}
 
-		// 3️⃣ Crear Ajuste Agregado si hay faltantes
-		if (adjustmentItems.length > 0) {
-			const adjCode = await generateDocumentCode({
-				tenantId: superUser, // superUser es el ID aquí
-				prefix: 'AJU',
+			// 4️⃣ Registrar recepción en el historial de la compra
+			buy.history.push({
+				action: 'GOODS_RECEIVED',
+				description: `Recepción de mercadería registrada con código ${receiptCode}`,
+				performedBy: receivedBy,
+				reference: {
+					model: 'GoodsReceipt',
+					id: receipt._id,
+				},
 			});
 
-			await PurchaseAdjustmentService.create({
-				code: adjCode,
-				buyId: buy._id,
-				type: 'SHORTAGE',
-				reason: `Ajuste automático por faltantes en recepción ${code}`,
-				items: adjustmentItems,
-				goodsReceiptId: receipt._id,
-				userId: receivedBy,
-				superUserId: superUser,
-			});
+			await buy.save();
+			return receipt;
+		} catch (error) {
+			console.log(error);
 		}
-
-		// 4️⃣ Registrar recepción en el historial de la compra
-		buy.history.push({
-			action: 'GOODS_RECEIVED',
-			description: `Recepción de mercadería registrada con código ${code}`,
-			performedBy: receivedBy,
-			reference: {
-				model: 'GoodsReceipt',
-				id: receipt._id,
-			},
-		});
-
-		await buy.save();
-		return receipt;
 	}
 
 	/* ======================================================
