@@ -72,6 +72,14 @@ const ProductSchema = new Schema(
 		},
 
 		/**
+		 * Costo base para manufactura (Promedio o Última compra)
+		 */
+		cost: {
+			type: Number,
+			default: 0,
+		},
+
+		/**
 		 * Indica si el producto está en oferta
 		 */
 		hasOffer: {

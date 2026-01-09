@@ -39,8 +39,14 @@ const PurchaseAdjustment = require('./purchaseAdjustment');
 const Warehouse = require('./warehouse');
 const InventoryAdjustment = require('./inventoryAdjustment');
 const ProductAuditLog = require('./productAuditLog');
+const BillOfMaterials = require('./billOfMaterials');
+const ProductionCostSnapshot = require('./productionCostSnapshot');
+const ManufacturingOrder = require('./manufacturingOrder');
 
 module.exports = {
+	ManufacturingOrder,
+	ProductionCostSnapshot,
+	BillOfMaterials,
 	ProductAuditLog,
 	Warehouse,
 	InventoryAdjustment,

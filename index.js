@@ -158,6 +158,14 @@ app.use(
 	'/api/purchase-adjustments',
 	require('./routes/purchaseAdjustment.routes.js')
 );
+
+// Manufatura
+app.use('/api/bom', require('./routes/billOfMaterials.routes.js'));
+app.use(
+	'/api/manufacturing-orders',
+	require('./routes/manufacturingOrder.routes.js')
+);
+
 // -----------error----------------
 app.use(
 	expressWinston.errorLogger({

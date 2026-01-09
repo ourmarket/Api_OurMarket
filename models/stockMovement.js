@@ -48,7 +48,15 @@ const StockMovementSchema = new Schema(
 
 		reason: {
 			type: String,
-			enum: ['BUY', 'SALE', 'ORDER', 'ADJUST', 'RETURN'],
+			enum: [
+				'BUY',
+				'SALE',
+				'ORDER',
+				'ADJUST',
+				'RETURN',
+				'MANUFACTURING',
+				'WASTE',
+			],
 			required: true,
 			index: true,
 		},
