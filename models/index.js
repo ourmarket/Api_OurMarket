@@ -42,8 +42,10 @@ const ProductAuditLog = require('./productAuditLog');
 const BillOfMaterials = require('./billOfMaterials');
 const ProductionCostSnapshot = require('./productionCostSnapshot');
 const ManufacturingOrder = require('./manufacturingOrder');
+const ProductLot = require('./productLot');
 
 module.exports = {
+	ProductLot,
 	ManufacturingOrder,
 	ProductionCostSnapshot,
 	BillOfMaterials,

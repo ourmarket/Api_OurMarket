@@ -1,7 +1,6 @@
 const { Counter } = require('../models');
 
 async function generateDocumentCode({ tenantId, prefix }) {
-	console.log(tenantId, prefix);
 	const year = new Date().getFullYear();
 	const key = `${tenantId}-${prefix}-${year}`;
 

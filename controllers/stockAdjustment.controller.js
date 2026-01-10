@@ -13,7 +13,7 @@ exports.createAdjustment = async (req, res) => {
 
 		// 1. Generar código correlativo para el ajuste
 		const code = await generateDocumentCode({
-			tenantId: req.tenant.clientId,
+			tenantId: superUser,
 			prefix: 'AJI', // Ajuste de Inventario
 		});
 

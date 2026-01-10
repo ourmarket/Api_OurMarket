@@ -6,6 +6,7 @@ const {
 	ProductionCostSnapshot,
 } = require('../models');
 const StockService = require('./stock.service');
+const StockFifoService = require('./stockFifo.service');
 const { generateDocumentCode } = require('./documentNumber.service');
 
 class ManufacturingService {
@@ -20,13 +21,8 @@ class ManufacturingService {
 			notes,
 			createdBy,
 			superUser,
+			manufacturingOrderCode,
 		} = data;
-
-		// Generar código único
-		const code = await generateDocumentCode({
-			tenantId: superUser,
-			prefix: 'MO', // Manufacturing Order
-		});
 
 		let inputs = [];
 		let outputs = [];
@@ -85,7 +81,7 @@ class ManufacturingService {
 		}
 
 		const order = await ManufacturingOrder.create({
-			code,
+			code: manufacturingOrderCode,
 			status: 'DRAFT',
 			inputs,
 			outputs,
@@ -101,9 +97,8 @@ class ManufacturingService {
 	/**
 	 * Ejecuta la orden:
 	 * 1. Valida stock y estado DRAFT
-	 * 2. Consume insumos (OUT) y registra sus costos (Snapshot)
-	 * 3. Genera productos (IN) sin asignar costo final
-	 * 4. Actualiza estado a EXECUTED
+	 * 2. Consume insumos (OUT) y registra sus costos (Snapshot) via FIFO
+	 * 3. Actualiza estado a EXECUTED
 	 */
 	static async executeOrder(orderId, user) {
 		const session = await mongoose.startSession();
@@ -127,15 +122,21 @@ class ManufacturingService {
 			let totalAuxCost = 0;
 
 			for (const input of order.inputs) {
-				// Obtener costo real del momento (Snapshot)
-				const productDoc = await Product.findById(input.product).session(
+				// 🟢 CONSUMO FIFO: Costo Real
+				const fifoResult = await StockFifoService.consumeFIFO(
+					{
+						productId: input.product,
+						quantity: input.quantity,
+						reason: 'MANUFACTURING',
+						reference: order._id,
+						code: `${order.code}-IN-${input.product}`,
+						superUser: user.superUser,
+						createdBy: user._id,
+					},
 					session
 				);
-				if (!productDoc)
-					throw new Error(`Producto insumo ${input.product} no encontrado`);
 
-				const currentUnitCost = productDoc.cost || 0;
-				const lineCost = currentUnitCost * input.quantity;
+				const lineCost = fifoResult.totalCost;
 
 				// Clasificar costos
 				if (input.type === 'AUX') {
@@ -144,24 +145,8 @@ class ManufacturingService {
 					totalInputCost += lineCost;
 				}
 
-				// Actualizar el costo unitario en la orden para referencia histórica
-				input.unitCost = currentUnitCost;
-
-				// Registrar movimiento STOCK OUT
-				await StockService.registerMovementInternal(
-					{
-						stockCode: `${order.code}-IN-${input.product}`, // Identificador único movimiento
-						product: input.product,
-						quantity: input.quantity,
-						type: 'OUT',
-						reason: 'MANUFACTURING',
-						reference: order._id,
-						createdBy: user._id,
-						superUser: user.superUser,
-						meta: { orderCode: order.code, step: 'CONSUMPTION' },
-					},
-					session
-				);
+				// Actualizar el costo unitario en la orden (Promedio ponderado del consumo)
+				input.unitCost = fifoResult.averageUnitCost;
 
 				// Crear Snapshot de Costo (Insumo)
 				await ProductionCostSnapshot.create(
@@ -170,7 +155,7 @@ class ManufacturingService {
 							manufacturingOrder: order._id,
 							product: input.product,
 							quantity: input.quantity,
-							unitCost: currentUnitCost,
+							unitCost: input.unitCost,
 							totalCost: lineCost,
 							type: 'INPUT',
 							superUser: user.superUser,
@@ -180,25 +165,8 @@ class ManufacturingService {
 				);
 			}
 
-			// 2. Generar Productos Resultantes (Outputs) -> Solo Movimientos
-			for (const output of order.outputs) {
-				// Registrar movimiento STOCK IN
-				// El costo no se asigna al stock todavía
-				await StockService.registerMovementInternal(
-					{
-						stockCode: `${order.code}-OUT-${output.product}`,
-						product: output.product,
-						quantity: output.quantity,
-						type: 'IN',
-						reason: 'MANUFACTURING',
-						reference: order._id,
-						createdBy: user._id,
-						superUser: user.superUser,
-						meta: { orderCode: order.code, step: 'PRODUCTION' },
-					},
-					session
-				);
-			}
+			// 2. NO Generar Productos Resultantes (Outputs) AQUI
+			// Se generan en closeOrder cuando se calcula el costo final.
 
 			// 3. Actualizar Orden a EXECUTED
 			order.status = 'EXECUTED';
@@ -230,7 +198,8 @@ class ManufacturingService {
 	 * 2. Calcula Costo Total (Input + Aux)
 	 * 3. Asigna Costo Unitario a Outputs (Prorrateo por Porcentaje o por Peso)
 	 * 4. Genera Snapshot de Outputs
-	 * 5. Actualiza estado a CLOSED
+	 * 5. Crea Lotes de Stock (ProductLot) para los productos terminados
+	 * 6. Actualiza estado a CLOSED
 	 */
 	static async closeOrder(orderId, user) {
 		const session = await mongoose.startSession();
@@ -252,7 +221,6 @@ class ManufacturingService {
 			const totalCost = (order.totalInputCost || 0) + (order.totalAuxCost || 0);
 
 			// Lógica de Costeo: ¿Existe algún porcentaje definido?
-			// Si al menos un output tiene costPercent definido (>0), usamos la lógica de porcentajes.
 			const hasCostPercent = order.outputs.some(
 				(o) => o.costPercent != null && o.costPercent > 0
 			);
@@ -283,6 +251,29 @@ class ManufacturingService {
 				unitCost = output.quantity > 0 ? allocatedCost / output.quantity : 0;
 
 				output.unitCost = unitCost;
+
+				// Generar Codigo Valido para Stock
+				const stockCode = await generateDocumentCode({
+					tenantId: user.superUser,
+					prefix: 'FAB', // Fabricación
+				});
+
+				// 🟢 CREAR LOTE DE STOCK (Producto Terminado)
+				// El costo nace AQUI
+				await StockFifoService.createLot(
+					{
+						code: stockCode,
+						productId: output.product,
+						quantity: output.quantity,
+						unitCost: unitCost,
+						type: 'MANUFACTURE',
+						reason: 'MANUFACTURING',
+						reference: order._id,
+						superUser: user.superUser,
+						createdBy: user._id,
+					},
+					session
+				);
 
 				// Guardar snapshot de costos
 				await ProductionCostSnapshot.create(

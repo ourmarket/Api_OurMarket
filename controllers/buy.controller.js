@@ -27,7 +27,7 @@ exports.createBuy = async (req, res) => {
 				.json({ message: 'Orden de compra ya tiene una compra' });
 		}
 		const code = await generateDocumentCode({
-			tenantId: req.tenant.clientId, // o req.tenant.id
+			tenantId: req.tenant._id,
 			prefix: 'COM',
 		});
 		const buy = await PurchaseFlowService.createBuy({

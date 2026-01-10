@@ -13,18 +13,23 @@ const PurchaseFlowService = require('../services/purchaseFlow.service');
 exports.createGoodsReceipt = async (req, res) => {
 	try {
 		const receiptCode = await generateDocumentCode({
-			tenantId: req.tenant.clientId,
+			tenantId: req.tenant._id,
 			prefix: 'REC',
 		});
 
-		const stockCode = await generateDocumentCode({
-			tenantId: req.tenant.clientId,
-			prefix: 'STK',
+		const adjustmentCode = await generateDocumentCode({
+			tenantId: req.tenant._id,
+			prefix: 'AJU',
+		});
+		const stockFifoCode = await generateDocumentCode({
+			tenantId: req.tenant._id,
+			prefix: 'STKF',
 		});
 
 		const receipt = await PurchaseFlowService.receiveGoods({
+			adjustmentCode,
 			receiptCode,
-			stockCode,
+			stockFifoCode,
 			buyId: req.body.buyId, // 👈 CLAVE
 			supplier: req.body.supplier,
 			generalObservations: req.body.generalObservations,

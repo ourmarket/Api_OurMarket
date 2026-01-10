@@ -6,6 +6,9 @@ const {
 } = require('../models');
 const mongoose = require('mongoose');
 
+// Importar servicio FIFO
+const StockFifoService = require('./stockFifo.service');
+
 class StockService {
 	/**
 	 * Registrar un movimiento de stock y actualizar el snapshot (Stock)
@@ -329,7 +332,7 @@ class StockService {
 	}
 
 	/**
-	 * Ajuste manual de stock
+	 * Ajuste manual de stock (FIFO Compatible)
 	 */
 	static async adjustStock({
 		code,
@@ -358,23 +361,45 @@ class StockService {
 				{ session }
 			);
 
-			// 2. Registrar movimientos para cada item
+			// 2. Registrar movimientos y afectar Lotes via FIFO
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i];
-				await this.registerMovementInternal(
-					{
-						stockCode: `${code}-${i + 1}`,
-						product: item.product,
-						quantity: item.quantity,
-						type: item.type, // IN | OUT
-						reason: 'ADJUST',
-						reference: adjustment[0]._id,
-						createdBy,
-						superUser,
-						meta: { adjustmentCode: code },
-					},
-					session
-				);
+				const moveCode = `${code}-${i + 1}`;
+
+				if (item.type === 'OUT') {
+					// Consumo FIFO: Reduce stock antiguo
+					await StockFifoService.consumeFIFO(
+						{
+							productId: item.product,
+							quantity: item.quantity,
+							reason: 'ADJUST',
+							reference: adjustment[0]._id,
+							code: moveCode,
+							superUser,
+						},
+						session
+					);
+				} else if (item.type === 'IN') {
+					// Ingreso Manual: Crea nuevo Lote
+					const cost = item.unitAmount || 0;
+
+					await StockFifoService.createLot(
+						{
+							productId: item.product,
+							quantity: item.quantity,
+							unitCost: cost,
+							type: 'ADJUSTMENT',
+							reason: 'ADJUST',
+							reference: adjustment[0]._id,
+							code: moveCode,
+							superUser,
+							createdBy,
+						},
+						session
+					);
+				} else {
+					throw new Error(`Tipo de ajuste desconocido: ${item.type}`);
+				}
 			}
 
 			await session.commitTransaction();
@@ -389,6 +414,7 @@ class StockService {
 
 	/**
 	 * Versión interna que acepta sesión para transacciones
+	 * @deprecated Use StockFifoService instead for IN/OUT
 	 */
 	static async registerMovementInternal(
 		{
@@ -464,6 +490,7 @@ class StockService {
 			{ session }
 		);
 
+		// Deprecated Sync with Product
 		await Product.findByIdAndUpdate(
 			productId,
 			{ stockAvailable: stock.quantityAvailable },

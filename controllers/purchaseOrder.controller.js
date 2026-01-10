@@ -18,7 +18,7 @@ const createPurchaseOrder = async (req, res) => {
 		}
 
 		const code = await generateDocumentCode({
-			tenantId: req.tenant.clientId,
+			tenantId: req.tenant._id,
 			prefix: 'OC',
 		});
 

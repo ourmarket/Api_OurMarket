@@ -1,7 +1,6 @@
 const { PurchaseOrder, Buy, GoodsReceipt } = require('../models');
 const PurchaseAdjustmentService = require('./purchaseAdjustment.service');
-const StockService = require('./stock.service');
-const { generateDocumentCode } = require('./documentNumber.service');
+const StockFifoService = require('./stockFifo.service');
 
 class PurchaseFlowService {
 	/* ======================================================
@@ -194,7 +193,8 @@ class PurchaseFlowService {
 	 * RECEIVE GOODS
 	 * ==================================== ================== */
 	static async receiveGoods({
-		stockCode,
+		adjustmentCode,
+		stockFifoCode,
 		receiptCode,
 		buyId,
 		supplier,
@@ -236,16 +236,19 @@ class PurchaseFlowService {
 				const received = item.quantityReceived;
 				const diff = received - expected;
 
-				// 1️⃣ Movimiento de stock (SIEMPRE por lo recibido)
-				await StockService.registerMovement({
-					stockCode: items.length > 1 ? `${stockCode}-${i + 1}` : stockCode,
-					product: item.product,
+				// 1️⃣ Movimiento de stock (SIEMPRE por lo recibido) usando FIFO
+				// NOTA: Se crea Lote con Costo Real
+				await StockFifoService.createLot({
+					code: stockFifoCode,
+					productId: item.product,
 					quantity: received,
-					type: 'IN',
+					unitCost: buyItem.unitCost, // Costo de la compra
+					type: 'BUY',
 					reason: 'BUY',
 					reference: buyId,
-					createdBy: receivedBy,
+					supplier,
 					superUser,
+					createdBy: receivedBy,
 				});
 
 				// 2️⃣ Coleccionar para Ajuste SOLO si es FALTANTE (diff < 0)
@@ -262,13 +265,8 @@ class PurchaseFlowService {
 
 			// 3️⃣ Crear Ajuste Agregado si hay faltantes
 			if (adjustmentItems.length > 0) {
-				const adjCode = await generateDocumentCode({
-					tenantId: superUser, // superUser es el ID aquí
-					prefix: 'AJU',
-				});
-
 				await PurchaseAdjustmentService.create({
-					code: adjCode,
+					code: adjustmentCode,
 					buyId: buy._id,
 					type: 'SHORTAGE',
 					reason: `Ajuste automático por faltantes en recepción ${receiptCode}`,
@@ -294,6 +292,7 @@ class PurchaseFlowService {
 			return receipt;
 		} catch (error) {
 			console.log(error);
+			throw error; // Propagate error explicitly
 		}
 	}
 

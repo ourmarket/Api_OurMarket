@@ -25,4 +25,6 @@ router.get('/summary', StockController.getStockSummary);
  */
 router.get('/:productId', StockController.getStockByProduct);
 
+router.post('/reconcile', StockController.reconcileStock); // 🚀 Reconciliación (Manual / Proactiva)
+
 module.exports = router;

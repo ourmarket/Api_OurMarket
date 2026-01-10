@@ -53,3 +53,29 @@ exports.getStockByProduct = async (req, res) => {
 		res.status(404).json({ message: error.message });
 	}
 };
+
+// 🚀 New Reconciliation Endpoint
+exports.reconcileStock = async (req, res) => {
+	try {
+		const { productId } = req.body;
+		const superUser = req.tenant._id;
+
+		if (productId) {
+			const result = await StockReconciliationService.reconcileProduct(
+				productId,
+				superUser
+			);
+			return res.status(200).json({ ok: true, data: result });
+		} else {
+			const result = await StockReconciliationService.reconcileAll(superUser);
+			return res.status(200).json({ ok: true, data: result });
+		}
+	} catch (error) {
+		logger.error(error);
+		res.status(500).json({
+			ok: false,
+			status: 500,
+			msg: error.message,
+		});
+	}
+};
