@@ -83,6 +83,7 @@ class ManufacturingService {
 		const order = await ManufacturingOrder.create({
 			code: manufacturingOrderCode,
 			status: 'DRAFT',
+			billOfMaterials: bomId || null,
 			inputs,
 			outputs,
 			notes,
@@ -122,6 +123,12 @@ class ManufacturingService {
 			let totalAuxCost = 0;
 
 			for (const input of order.inputs) {
+				// Generar Codigo de Consumo (Clean)
+				const consumptionCode = await generateDocumentCode({
+					tenantId: user.superUser,
+					prefix: 'FAB-OUT',
+				});
+
 				// 🟢 CONSUMO FIFO: Costo Real
 				const fifoResult = await StockFifoService.consumeFIFO(
 					{
@@ -129,7 +136,7 @@ class ManufacturingService {
 						quantity: input.quantity,
 						reason: 'MANUFACTURING',
 						reference: order._id,
-						code: `${order.code}-IN-${input.product}`,
+						code: consumptionCode,
 						superUser: user.superUser,
 						createdBy: user._id,
 					},

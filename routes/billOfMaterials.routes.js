@@ -10,5 +10,6 @@ router.get('/', BomController.getList);
 router.get('/:id', BomController.getById);
 router.put('/:id', BomController.update);
 router.patch('/:id/toggle-active', BomController.toggleActive);
+router.delete('/:id', BomController.deleteBom);
 
 module.exports = router;

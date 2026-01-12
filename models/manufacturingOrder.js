@@ -15,6 +15,12 @@ const ManufacturingOrderSchema = new Schema(
 			default: 'DRAFT',
 			index: true,
 		},
+		billOfMaterials: {
+			type: Schema.Types.ObjectId,
+			ref: 'BillOfMaterials',
+			default: null,
+			index: true,
+		},
 
 		/**
 		 * INSUMOS CONSUMIDOS

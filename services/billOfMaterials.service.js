@@ -1,4 +1,5 @@
-const { BillOfMaterials, Product } = require('../models');
+const { BillOfMaterials, Product, ManufacturingOrder } = require('../models');
+const mongoose = require('mongoose');
 const { generateDocumentCode } = require('../services/documentNumber.service'); // Assuming this path or need to verify where it is. It was found in services/documentNumber.service.js
 
 class BillOfMaterialsService {
@@ -69,9 +70,19 @@ class BillOfMaterialsService {
 		return bom.populate(['product', 'inputs.product']);
 	}
 
-	static async getList({ superUser, page = 1, limit = 20, search = '' }) {
+	static async getList({
+		superUser,
+		page = 1,
+		limit = 20,
+		search = '',
+		isActive,
+	}) {
 		const skip = (page - 1) * limit;
 		const query = { superUser };
+
+		if (isActive !== undefined && isActive !== null && isActive !== '') {
+			query.isActive = isActive === 'true' || isActive === true;
+		}
 
 		if (search) {
 			// Find products matching name, then find BOMs with those products
@@ -91,8 +102,9 @@ class BillOfMaterialsService {
 
 		const [data, total] = await Promise.all([
 			BillOfMaterials.find(query)
-				.populate('product', 'name code')
-				.populate('inputs.product', 'name code')
+				.populate('product', 'name code unit unitCost')
+				.populate('inputs.product', 'name code unit unitCost')
+				.populate('outputs.product', 'name code unit unitCost')
 				.skip(skip)
 				.limit(limit)
 				.sort({ createdAt: -1 }),
@@ -105,13 +117,17 @@ class BillOfMaterialsService {
 	static async getById(id, superUser) {
 		const bom = await BillOfMaterials.findOne({ _id: id, superUser })
 			.populate('product')
-			.populate('inputs.product');
+			.populate('inputs.product')
+			.populate('outputs.product');
 		if (!bom) throw new Error('Receta no encontrada');
 		return bom;
 	}
 
 	static async toggleActive(id, superUser) {
-		const bom = await BillOfMaterials.findOne({ _id: id, superUser });
+		const bom = await BillOfMaterials.findOne({
+			_id: new mongoose.Types.ObjectId(id),
+			superUser,
+		});
 		if (!bom) throw new Error('Receta no encontrada');
 
 		bom.isActive = !bom.isActive;
@@ -130,6 +146,26 @@ class BillOfMaterialsService {
 		return BillOfMaterials.findOne({ product: productId, superUser }).populate(
 			'inputs.product'
 		);
+	}
+
+	static async delete(id, superUser) {
+		const bom = await BillOfMaterials.findOne({ _id: id, superUser });
+		if (!bom) throw new Error('Receta no encontrada');
+
+		// Verificar si ha sido usada en alguna orden de producción
+		const isUsed = await ManufacturingOrder.exists({
+			billOfMaterials: id,
+			superUser,
+		});
+
+		if (isUsed) {
+			throw new Error(
+				'Esta receta ya ha sido utilizada en órdenes de producción y no puede eliminarse. Puede desactivarla para evitar su uso futuro.'
+			);
+		}
+
+		await BillOfMaterials.deleteOne({ _id: id, superUser });
+		return { message: 'Receta eliminada correctamente' };
 	}
 }
 

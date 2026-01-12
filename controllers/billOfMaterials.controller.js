@@ -28,13 +28,14 @@ const update = async (req, res) => {
 
 const getList = async (req, res) => {
 	try {
-		const { page, limit, search } = req.query;
+		const { page, limit, search, isActive } = req.query;
 		const { user } = req;
 		const result = await BillOfMaterialsService.getList({
 			superUser: user.superUser,
 			page: parseInt(page),
 			limit: parseInt(limit),
 			search,
+			isActive,
 		});
 		res.json(result);
 	} catch (error) {
@@ -79,6 +80,17 @@ const getActiveRecipes = async (req, res) => {
 	}
 };
 
+const deleteBom = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { user } = req;
+		const result = await BillOfMaterialsService.delete(id, user.superUser);
+		res.json(result);
+	} catch (error) {
+		res.status(400).json({ message: error.message });
+	}
+};
+
 module.exports = {
 	create,
 	update,
@@ -86,4 +98,5 @@ module.exports = {
 	getById,
 	toggleActive,
 	getActiveRecipes,
+	deleteBom,
 };

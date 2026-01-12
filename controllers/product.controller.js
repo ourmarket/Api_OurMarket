@@ -6,17 +6,73 @@ const { ObjectId } = require('mongodb');
 
 const getProducts = async (req, res = response) => {
 	try {
-		const { limit = 100000, from = 0 } = req.query;
+		const { limit = 100000, from = 0, includeCost = 'false' } = req.query;
 		const query = { state: true, superUser: req.tenant._id };
 
-		const [total, products] = await Promise.all([
-			Product.countDocuments(query),
-			Product.find(query)
-				.populate('category', 'name')
-				.skip(Number(from))
-				.limit(Number(limit))
-				.sort({ name: 1 }),
-		]);
+		let total;
+		let products;
+
+		if (includeCost === 'true') {
+			// Usamos agregación para traer el último costo de ProductLot
+			products = await Product.aggregate([
+				{ $match: query },
+				{ $sort: { name: 1 } },
+				{ $skip: Number(from) },
+				{ $limit: Number(limit) },
+				{
+					$lookup: {
+						from: 'productlots',
+						let: { productId: '$_id' },
+						pipeline: [
+							{ $match: { $expr: { $eq: ['$product', '$$productId'] } } },
+							{ $sort: { createdAt: -1 } },
+							{ $limit: 1 },
+						],
+						as: 'latestLot',
+					},
+				},
+				{
+					$addFields: {
+						cost: {
+							$ifNull: [
+								{ $arrayElemAt: ['$latestLot.unitCost', 0] },
+								'$cost', // fallback al costo base del modelo
+							],
+						},
+					},
+				},
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'category',
+						foreignField: '_id',
+						as: 'category',
+					},
+				},
+				{
+					$unwind: {
+						path: '$category',
+						preserveNullAndEmptyArrays: true,
+					},
+				},
+				{
+					$project: {
+						latestLot: 0,
+						__v: 0,
+					},
+				},
+			]);
+			total = await Product.countDocuments(query);
+		} else {
+			[total, products] = await Promise.all([
+				Product.countDocuments(query),
+				Product.find(query)
+					.populate('category', 'name')
+					.skip(Number(from))
+					.limit(Number(limit))
+					.sort({ name: 1 }),
+			]);
+		}
 
 		return res.status(200).json({
 			ok: true,
