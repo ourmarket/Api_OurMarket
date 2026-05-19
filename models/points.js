@@ -11,6 +11,7 @@ const PointsSchema = Schema(
 			default: null,
 		},
 		orderId: { type: Schema.Types.ObjectId, ref: 'Order', default: null },
+		expiresAt: { type: Date, default: null }, // Fecha de caducidad
 		state: { type: Boolean, default: true },
 		superUser: {
 			type: Schema.Types.ObjectId,

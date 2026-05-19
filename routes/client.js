@@ -12,6 +12,7 @@ const {
 	getClientQuantity,
 	searchClients,
 } = require('../controllers/client');
+const { googleAuthClient } = require('../controllers/googleAuthClient');
 const {
 	getClientValidator,
 	postClientValidator,
@@ -32,6 +33,9 @@ router.get('/quantity', getClientQuantity);
 // cambiar los clientes a activos si compraron en los ultimos 30 dias
 // router.get('/setActiveClients', activeClient)
 router.get("/search", searchClients);
+
+// Google Auth (Registro o vinculación de cliente)
+router.post('/auth/google', googleAuthClient);
 
 // Obtener una Cliente por id - publico
 router.get('/:id', getClientValidator, getClient);

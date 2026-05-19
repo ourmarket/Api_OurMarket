@@ -1,5 +1,5 @@
 const { response } = require('express');
-const { Order, Stock } = require('../models');
+const { Order, Stock, Config, Client, Points, Recommendation } = require('../models');
 const { getTokenData } = require('../helpers');
 const { logger, controllerLogger } = require('../helpers/logger');
 const {
@@ -228,14 +228,28 @@ const getOrder = async (req, res = response) => {
 // ✔
 const postOrder = async (req, res = response) => {
 	try {
-		const { state, paid, subTotal, client, orderItems, ...body } = req.body;
+		const { state, paid, subTotal, client, orderItems, pointsUsed = 0, ...body } = req.body;
 		const jwt =
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
-		// 1. Restar stock
+		// 1. Configuración y Validación de Puntos
+		let pointsDiscount = 0;
+		const config = await Config.findOne({ superUser: tokenData.UserInfo.superUser, state: true });
+		
+		if (pointsUsed > 0 && client) {
+			const clientData = await Client.findById(client);
+			if (clientData && clientData.points >= pointsUsed) {
+				const conversionRate = config?.pointsConversionRate || 10;
+				pointsDiscount = pointsUsed / conversionRate;
+			} else {
+				throw new Error('Puntos insuficientes');
+			}
+		}
+
+		// 2. Restar stock
 
 		const orderItemsEdit = [];
 		for (let i = 0; i < orderItems.length; i++) {
@@ -296,18 +310,63 @@ const postOrder = async (req, res = response) => {
 			});
 		}
 
-		// 2. Guardar la orden en DB
+		// Ajustar totales
+		const finalTotal = body.total ? body.total - pointsDiscount : undefined;
+
+		// 3. Guardar la orden en DB
 		const data = {
 			...body,
 			orderItems: orderItemsEdit,
 			paid,
-			subTotal,
+			subTotal: subTotal ? subTotal - pointsDiscount : undefined,
+			total: finalTotal,
+			pointsUsed,
+			pointsDiscount,
 			client,
 			superUser: tokenData.UserInfo.superUser,
 		};
 
 		const order = new Order(data);
 		await order.save();
+
+		// 4. Lógica Post-Venta: Canje y Recompensa por Referido
+		if (pointsUsed > 0 && client) {
+			const newPointsRecord = new Points({
+				clientId: client,
+				points: -pointsUsed,
+				action: 'exchange',
+				orderId: order._id,
+				superUser: tokenData.UserInfo.superUser,
+			});
+			await newPointsRecord.save();
+			await Client.findByIdAndUpdate(client, { $inc: { points: -pointsUsed } });
+		}
+
+		if (paid && client) {
+			// Revisar si es la primera compra
+			const previousOrdersCount = await Order.countDocuments({ client, paid: true, _id: { $ne: order._id } });
+			if (previousOrdersCount === 0) {
+				const recommendation = await Recommendation.findOne({ recommendedClient: client, state: true });
+				if (recommendation) {
+					const pointsToGive = config?.pointsPerReferral || 500;
+					const daysToExpire = config?.pointsExpirationDays || 90;
+					const expiresAt = new Date();
+					expiresAt.setDate(expiresAt.getDate() + daysToExpire);
+
+					const rewardPoints = new Points({
+						clientId: recommendation.clientId,
+						points: pointsToGive,
+						action: 'recommendation',
+						recommendedClientId: client,
+						orderId: order._id,
+						expiresAt,
+						superUser: tokenData.UserInfo.superUser
+					});
+					await rewardPoints.save();
+					await Client.findByIdAndUpdate(recommendation.clientId, { $inc: { points: pointsToGive } });
+				}
+			}
+		}
 
 		res.status(200).json({
 			ok: true,

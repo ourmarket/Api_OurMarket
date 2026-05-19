@@ -9,6 +9,8 @@ const SaleSchema = Schema({
 	totalCost: { type: Number },
 	totalSale: { type: Number },
 	profit: { type: Number },
+	pointsUsed: { type: Number, default: 0 },
+	pointsDiscount: { type: Number, default: 0 },
 	state: { type: Boolean, default: true, required: true },
 
 	superUser: {

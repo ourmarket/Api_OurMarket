@@ -25,7 +25,7 @@ const getClients = async (req, res = response) => {
 			superUser: tokenData.UserInfo.superUser,
 		})
 			.populate('clientCategory', ['clientCategory'])
-			.populate('user', ['name', 'lastName', 'phone', 'email'])
+			.populate('user', ['name', 'lastName', 'phone', 'email', 'google', 'verified'])
 			.populate('clientType', ['clientType']);
 
 		return res.status(200).json({
@@ -51,7 +51,7 @@ const getClient = async (req, res = response) => {
 		const { id } = req.params;
 		const client = await Client.findById(id)
 			.populate('clientCategory', ['clientCategory'])
-			.populate('user', ['name', 'lastName', 'phone', 'email'])
+			.populate('user', ['name', 'lastName', 'phone', 'email', 'google', 'verified'])
 			.populate('clientType', ['clientType']);
 
 		const points = await Points.find({ state: true, clientId: id });
@@ -546,7 +546,7 @@ const searchClients = async (req, res) => {
             user: { $in: usersIds },
             state: true,
         })
-            .populate('user', 'name lastName phone email')
+            .populate('user', 'name lastName phone email google verified')
             .limit(10);
 
         return res.json({
