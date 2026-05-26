@@ -93,11 +93,7 @@ const postConfig = async (req, res = response) => {
 
 const putConfig = async (req, res = response) => {
 	try {
-		const { inactiveDays } = req.body;
-
-		const data = {
-			inactiveDays,
-		};
+		const { state, superUser, ...data } = req.body;
 
 		const jwt =
 			req.cookies.jwt_dashboard ||

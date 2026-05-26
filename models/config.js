@@ -18,6 +18,10 @@ const ConfigSchema = Schema(
 			type: Number,
 			default: 10, // Ej: 10 puntos = $1 de descuento
 		},
+		pointsPerPesoSpent: {
+			type: Number,
+			default: 1, // Ej: 1 peso gastado = 1 punto
+		},
 
 		state: {
 			type: Boolean,

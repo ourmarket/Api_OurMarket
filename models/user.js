@@ -2,10 +2,10 @@ const { Schema, model } = require('mongoose');
 
 const UserSchema = Schema(
 	{
-		name: { type: String },
-		lastName: { type: String },
+		name: { type: String, default: "" },
+		lastName: { type: String, default: "" },
 		email: { type: String },
-		phone: { type: String, default: null },
+		phone: { type: String, default: "" },
 		password: { type: String },
 		avatar: {
 			type: String,

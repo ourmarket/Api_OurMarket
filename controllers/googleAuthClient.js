@@ -35,9 +35,23 @@ const googleAuthClient = async (req, res = response) => {
                 user.google = true;
                 user.verified = true;
                 if(picture) user.avatar = picture;
-                // Opcional: Podríamos actualizar el nombre también
-                // user.name = given_name;
-                // user.lastName = family_name;
+
+                let finalName = given_name || "";
+                let finalLastName = family_name || "";
+                if (!family_name && payload.name) {
+                    const nameParts = payload.name.trim().split(' ');
+                    if (nameParts.length > 1) {
+                        finalName = nameParts[0];
+                        finalLastName = nameParts.slice(1).join(' ');
+                    } else {
+                        finalName = payload.name;
+                    }
+                }
+
+                if (!user.name || user.name === "") user.name = finalName;
+                if (!user.lastName || user.lastName === "") user.lastName = finalLastName;
+                if (!user.phone || user.phone === null) user.phone = "";
+
                 await user.save();
             }
         } else {
@@ -62,10 +76,23 @@ const googleAuthClient = async (req, res = response) => {
                 if (!superUserId) {
                     return res.status(400).json({ ok: false, msg: 'No se pudo determinar el tenant (superUser)' });
                 }
+                let finalName = given_name || "";
+                let finalLastName = family_name || "";
+
+                // Si Google no nos da family_name pero sí el 'name' completo, lo intentamos separar por espacios
+                if (!family_name && payload.name) {
+                    const nameParts = payload.name.trim().split(' ');
+                    if (nameParts.length > 1) {
+                        finalName = nameParts[0];
+                        finalLastName = nameParts.slice(1).join(' ');
+                    } else {
+                        finalName = payload.name;
+                    }
+                }
 
 			    user = new User({
-				    name: given_name,
-				    lastName: family_name,
+				    name: finalName,
+				    lastName: finalLastName,
 				    email,
 				    avatar: picture,
 				    google: true,
@@ -121,6 +148,23 @@ const googleAuthClient = async (req, res = response) => {
 			    user.google = true;
 			    user.verified = true;
                 if(picture) user.avatar = picture;
+
+                let finalName = given_name || "";
+                let finalLastName = family_name || "";
+                if (!family_name && payload.name) {
+                    const nameParts = payload.name.trim().split(' ');
+                    if (nameParts.length > 1) {
+                        finalName = nameParts[0];
+                        finalLastName = nameParts.slice(1).join(' ');
+                    } else {
+                        finalName = payload.name;
+                    }
+                }
+
+                if (!user.name || user.name === "") user.name = finalName;
+                if (!user.lastName || user.lastName === "") user.lastName = finalLastName;
+                if (!user.phone || user.phone === null) user.phone = "";
+
 			    await user.save();
 
                 clientRecord = await Client.findOne({ user: user._id });

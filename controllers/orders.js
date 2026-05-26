@@ -318,7 +318,7 @@ const postOrder = async (req, res = response) => {
 			...body,
 			orderItems: orderItemsEdit,
 			paid,
-			subTotal: subTotal ? subTotal - pointsDiscount : undefined,
+			subTotal: subTotal,
 			total: finalTotal,
 			pointsUsed,
 			pointsDiscount,
@@ -343,7 +343,29 @@ const postOrder = async (req, res = response) => {
 		}
 
 		if (paid && client) {
-			// Revisar si es la primera compra
+			// 1. Acumular puntos para el comprador
+			const earnRate = config?.pointsPerPesoSpent !== undefined ? config.pointsPerPesoSpent : 1;
+			const pointsEarned = Math.trunc((subTotal || 0) * earnRate);
+
+			if (pointsEarned > 0) {
+				const daysToExpire = config?.pointsExpirationDays || 90;
+				const expiresAt = new Date();
+				expiresAt.setDate(expiresAt.getDate() + daysToExpire);
+
+				const buyPoints = new Points({
+					clientId: client,
+					points: pointsEarned,
+					action: 'buy',
+					orderId: order._id,
+					expiresAt,
+					superUser: tokenData.UserInfo.superUser,
+				});
+				await buyPoints.save();
+
+				await Client.findByIdAndUpdate(client, { $inc: { points: pointsEarned } });
+			}
+
+			// 2. Revisar si es la primera compra (para recompensa por referido)
 			const previousOrdersCount = await Order.countDocuments({ client, paid: true, _id: { $ne: order._id } });
 			if (previousOrdersCount === 0) {
 				const recommendation = await Recommendation.findOne({ recommendedClient: client, state: true });
@@ -469,11 +491,101 @@ const putOrder = async (req, res = response) => {
 			`>>>>>>>>>>>>>>>>>> Orden Id: ${id} <<<<<<<<<<<<<<<<<<<<<`
 		);
 
+		const oldOrder = await Order.findById(id);
+		if (!oldOrder) {
+			return res.status(404).json({
+				ok: false,
+				status: 404,
+				msg: 'Orden no encontrada',
+			});
+		}
+
+		// --- LÓGICA DE PUNTOS ---
+		const config = await Config.findOne({ superUser: oldOrder.superUser, state: true });
+		
+		// 1. Canje de puntos (Redemption)
+		if (data.pointsUsed > 0 && data.client && (!oldOrder.pointsUsed || oldOrder.pointsUsed === 0)) {
+			const clientData = await Client.findById(data.client);
+			if (clientData && clientData.points >= data.pointsUsed) {
+				const conversionRate = config?.pointsConversionRate || 10;
+				const pointsDiscount = data.pointsUsed / conversionRate;
+
+				// Registrar el canje en la colección Points
+				const newPointsRecord = new Points({
+					clientId: data.client,
+					points: -data.pointsUsed,
+					action: 'exchange',
+					orderId: id,
+					superUser: oldOrder.superUser,
+				});
+				await newPointsRecord.save();
+
+				// Descontar saldo del cliente
+				await Client.findByIdAndUpdate(data.client, { $inc: { points: -data.pointsUsed } });
+
+				// Ajustar montos en el payload a actualizar
+				data.pointsUsed = data.pointsUsed;
+				data.pointsDiscount = pointsDiscount;
+				data.subTotal = data.subTotal !== undefined ? data.subTotal : oldOrder.subTotal;
+				data.total = data.total !== undefined ? data.total : oldOrder.total;
+			} else {
+				throw new Error('Puntos insuficientes');
+			}
+		}
+
+		// 2. Acumulación de puntos por compra pagada
+		if (data.paid && data.client && !oldOrder.paid) {
+			const earnRate = config?.pointsPerPesoSpent !== undefined ? config.pointsPerPesoSpent : 1;
+			const currentSubTotal = (data.subTotal !== undefined ? data.subTotal : oldOrder.subTotal) - (data.pointsDiscount || oldOrder.pointsDiscount || 0);
+			const pointsEarned = Math.trunc((currentSubTotal || 0) * earnRate);
+
+			if (pointsEarned > 0) {
+				const daysToExpire = config?.pointsExpirationDays || 90;
+				const expiresAt = new Date();
+				expiresAt.setDate(expiresAt.getDate() + daysToExpire);
+
+				const buyPoints = new Points({
+					clientId: data.client,
+					points: pointsEarned,
+					action: 'buy',
+					orderId: id,
+					expiresAt,
+					superUser: oldOrder.superUser,
+				});
+				await buyPoints.save();
+
+				await Client.findByIdAndUpdate(data.client, { $inc: { points: pointsEarned } });
+			}
+
+			// Revisar si es la primera compra para referidos
+			const previousOrdersCount = await Order.countDocuments({ client: data.client, paid: true, _id: { $ne: id } });
+			if (previousOrdersCount === 0) {
+				const recommendation = await Recommendation.findOne({ recommendedClient: data.client, state: true });
+				if (recommendation) {
+					const pointsToGive = config?.pointsPerReferral || 500;
+					const daysToExpire = config?.pointsExpirationDays || 90;
+					const expiresAt = new Date();
+					expiresAt.setDate(expiresAt.getDate() + daysToExpire);
+
+					const rewardPoints = new Points({
+						clientId: recommendation.clientId,
+						points: pointsToGive,
+						action: 'recommendation',
+						recommendedClientId: data.client,
+						orderId: id,
+						expiresAt,
+						superUser: oldOrder.superUser
+					});
+					await rewardPoints.save();
+					await Client.findByIdAndUpdate(recommendation.clientId, { $inc: { points: pointsToGive } });
+				}
+			}
+		}
+		// ------------------------
+
 		// 1. Si hay cambios en los productos
 		if (data?.orderItems) {
 			const orderItemsUpdate = [];
-
-			const oldOrder = await Order.findById(id);
 			const modifyOrder = {
 				...data,
 			};

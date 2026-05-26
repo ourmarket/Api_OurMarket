@@ -1594,6 +1594,9 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 					debtTotal: {
 						$sum: '$payment.debt',
 					},
+					pointsDiscountTotal: {
+						$sum: '$pointsDiscount',
+					},
 				},
 			},
 			{
@@ -1611,14 +1614,16 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 					cashTotal: 1,
 					transferTotal: 1,
 					debtTotal: 1,
+					pointsDiscountTotal: 1,
 				},
 			},
 			{
 				$project: {
-					total: { $sum: ['$cashTotal', '$transferTotal', '$debtTotal'] },
+					total: { $sum: ['$cashTotal', '$transferTotal', '$debtTotal', '$pointsDiscountTotal'] },
 					cashTotal: 1,
 					transferTotal: 1,
 					debtTotal: 1,
+					pointsDiscountTotal: 1,
 					date: {
 						$concat: ['$day', '-', '$month', '-', '$year'],
 					},
