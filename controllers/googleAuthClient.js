@@ -1,10 +1,132 @@
 const { response } = require('express');
 const { OAuth2Client } = require('google-auth-library');
 const { Client, User, Recommendation } = require('../models');
+const jwt = require('jsonwebtoken');
 
 const googleAuthClient = async (req, res = response) => {
 	try {
-		const { token, ref, link, tenant } = req.body;
+		const { token, ref, link, tenant, sandboxEmail } = req.body;
+
+		// Sandbox local login mode (only outside production)
+		if (sandboxEmail && process.env.NODE_ENV !== 'production') {
+			let user = null;
+			let clientRecord = null;
+
+			if (link) {
+				clientRecord = await Client.findById(link);
+				if (!clientRecord) {
+					return res.status(404).json({ ok: false, msg: 'El cliente a vincular no existe' });
+				}
+				
+				user = await User.findById(clientRecord.user);
+				if (user) {
+					user.email = sandboxEmail.trim();
+					user.verified = true;
+					await user.save();
+				}
+			} else {
+				user = await User.findOne({ email: sandboxEmail.trim() });
+
+				if (!user) {
+					let superUserId = null;
+					if (ref) {
+						const referrerClient = await Client.findById(ref);
+						if (referrerClient) superUserId = referrerClient.superUser;
+					} else if (tenant) {
+						superUserId = tenant;
+					} else {
+						const { SuperUser } = require('../models');
+						const admin = await SuperUser.findOne({ state: true });
+						superUserId = admin ? admin._id : null;
+					}
+
+					if (!superUserId) {
+						return res.status(400).json({ ok: false, msg: 'No se pudo determinar el tenant (superUser)' });
+					}
+
+					user = new User({
+						name: 'Juan',
+						lastName: 'Test',
+						email: sandboxEmail.trim(),
+						avatar: null,
+						google: false,
+						verified: true,
+						id_social: 'sandbox-sub',
+						social_provider: 'sandbox',
+						password: '@@@',
+						superUser: superUserId,
+					});
+					await user.save();
+
+					const { ClientCategory, ClientType } = require('../models');
+					let defaultCategory = await ClientCategory.findOne({ superUser: superUserId });
+					let defaultType = await ClientType.findOne({ superUser: superUserId });
+
+					if (!defaultCategory) {
+						defaultCategory = new ClientCategory({ clientCategory: 'General', superUser: superUserId });
+						await defaultCategory.save();
+					}
+					if (!defaultType) {
+						defaultType = new ClientType({ clientType: 'Minorista', superUser: superUserId });
+						await defaultType.save();
+					}
+
+					clientRecord = new Client({
+						user: user._id,
+						superUser: superUserId,
+						clientCategory: defaultCategory._id,
+						clientType: defaultType._id,
+					});
+					await clientRecord.save();
+				} else {
+					clientRecord = await Client.findOne({ user: user._id });
+					if (!clientRecord) {
+						const { ClientCategory, ClientType } = require('../models');
+						let defaultCategory = await ClientCategory.findOne({ superUser: user.superUser });
+						let defaultType = await ClientType.findOne({ superUser: user.superUser });
+
+						if (!defaultCategory) {
+							defaultCategory = new ClientCategory({ clientCategory: 'General', superUser: user.superUser });
+							await defaultCategory.save();
+						}
+						if (!defaultType) {
+							defaultType = new ClientType({ clientType: 'Minorista', superUser: user.superUser });
+							await defaultType.save();
+						}
+
+						clientRecord = new Client({
+							user: user._id,
+							superUser: user.superUser,
+							clientCategory: defaultCategory._id,
+							clientType: defaultType._id,
+						});
+						await clientRecord.save();
+					}
+				}
+			}
+
+			const tokenResponse = jwt.sign(
+				{
+					UserInfo: {
+						id: user._id,
+						role: user.role,
+						superUser: user.superUser,
+					},
+				},
+				process.env.JWT_SECRET,
+				{ expiresIn: '30d' }
+			);
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				msg: 'Validación exitosa (Sandbox)',
+				token: tokenResponse,
+				data: {
+					client: clientRecord,
+				}
+			});
+		}
 
         const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
         const client = new OAuth2Client(clientId);
@@ -193,13 +315,26 @@ const googleAuthClient = async (req, res = response) => {
 		    }
         }
 
+		const tokenResponse = jwt.sign(
+			{
+				UserInfo: {
+					id: user._id,
+					role: user.role,
+					superUser: user.superUser,
+				},
+			},
+			process.env.JWT_SECRET,
+			{ expiresIn: '30d' }
+		);
+
 		res.status(200).json({
 			ok: true,
 			status: 200,
 			msg: 'Validación exitosa',
-            data: {
-                client: clientRecord,
-            }
+			token: tokenResponse,
+			data: {
+				client: clientRecord,
+			}
 		});
 	} catch (error) {
 		console.log(error);

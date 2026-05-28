@@ -7,10 +7,19 @@ const { ObjectId } = require('mongodb');
 const getConfig = async (req, res = response) => {
 	try {
 		const jwt =
+			req.header('x-token') ||
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (!tokenData || !tokenData.UserInfo || !tokenData.UserInfo.superUser) {
+			return res.status(401).json({
+				ok: false,
+				status: 401,
+				msg: 'No hay un token válido en la petición',
+			});
+		}
 
 		const config = await Config.find({
 			state: true,
@@ -42,10 +51,19 @@ const postConfig = async (req, res = response) => {
 	try {
 		const { state, ...body } = req.body;
 		const jwt =
+			req.header('x-token') ||
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (!tokenData || !tokenData.UserInfo || !tokenData.UserInfo.superUser) {
+			return res.status(401).json({
+				ok: false,
+				status: 401,
+				msg: 'No hay un token válido en la petición',
+			});
+		}
 
 		const existConfig = await Config.findOne({
 			superUser: tokenData.UserInfo.superUser,
@@ -96,10 +114,19 @@ const putConfig = async (req, res = response) => {
 		const { state, superUser, ...data } = req.body;
 
 		const jwt =
+			req.header('x-token') ||
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (!tokenData || !tokenData.UserInfo || !tokenData.UserInfo.superUser) {
+			return res.status(401).json({
+				ok: false,
+				status: 401,
+				msg: 'No hay un token válido en la petición',
+			});
+		}
 
 		const editConfig = await Config.findOneAndUpdate(
 			{ superUser: tokenData.UserInfo.superUser },
@@ -124,10 +151,19 @@ const putConfig = async (req, res = response) => {
 const setConfigActiveClient = async (req, res = response) => {
 	try {
 		const jwt =
+			req.header('x-token') ||
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (!tokenData || !tokenData.UserInfo || !tokenData.UserInfo.superUser) {
+			return res.status(401).json({
+				ok: false,
+				status: 401,
+				msg: 'No hay un token válido en la petición',
+			});
+		}
 
 		const config = await Config.find({
 			superUser: tokenData.UserInfo.superUser,

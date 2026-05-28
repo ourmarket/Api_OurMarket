@@ -15,10 +15,19 @@ const { logger } = require('../helpers/logger');
 const getClients = async (req, res = response) => {
 	try {
 		const jwt =
+			req.header('x-token') ||
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
+
+		if (!tokenData || !tokenData.UserInfo || !tokenData.UserInfo.superUser) {
+			return res.status(401).json({
+				ok: false,
+				status: 401,
+				msg: 'No hay un token válido en la petición',
+			});
+		}
 
 		const clients = await Client.find({
 			state: true,

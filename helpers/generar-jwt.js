@@ -34,29 +34,36 @@ const getToken = (payload) => {
 };
 
 const getTokenData = (token) => {
-	let data = null;
+	if (!token) return null;
 
-	jwt.verify(token, process.env.JWT_REFRESH, async (err, decoded) => {
-		if (err) {
-			logger.error('Error al obtener data del token', err);
-		} else {
-			data = decoded;
-		}
-	});
+	// 1. Try decoding with JWT_SECRET (for customer portal x-token)
+	try {
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		if (decoded) return decoded;
+	} catch (err) {
+		// Ignore and proceed to try JWT_REFRESH
+	}
 
-	return data;
+	// 2. Try decoding with JWT_REFRESH (for dashboard/tpv/delivery cookies)
+	try {
+		const decoded = jwt.verify(token, process.env.JWT_REFRESH);
+		if (decoded) return decoded;
+	} catch (err) {
+		logger.error('Error al obtener data del token', err);
+	}
+
+	return null;
 };
 const getRefreshTokenData = (token) => {
-	let data = null;
-	jwt.verify(token, process.env.JWT_REFRESH, async (err, decoded) => {
-		if (err) {
-			logger.error('Error al obtener data del token', err);
-		} else {
-			data = decoded;
-		}
-	});
+	if (!token) return null;
 
-	return data;
+	try {
+		const decoded = jwt.verify(token, process.env.JWT_REFRESH);
+		return decoded;
+	} catch (err) {
+		logger.error('Error al obtener data del token refresh', err);
+		return null;
+	}
 };
 
 module.exports = {

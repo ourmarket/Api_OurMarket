@@ -16,7 +16,9 @@ const allowedOrigins = [
 	'http://192.168.100.5:3015',
 	'http://localhost:5173',
 	'http://localhost:5174',
+	'http://localhost:5175',
 	'https://preventa-ringoagromarket.netlify.app',
+	'https://autogestion-ringo.netlify.app',
 ];
 
 module.exports = allowedOrigins;
