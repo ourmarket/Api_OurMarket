@@ -46,38 +46,54 @@ const getAllRecommendationByClient = async (req, res = response) => {
 		const recommendation = await Recommendation.find({
 			state: true,
 			clientId: id,
-		}).populate('recommendedUser', ['name', 'lastName', 'avatar']);
+		})
+			.populate('recommendedUser', ['name', 'lastName', 'avatar'])
+			.populate({
+				path: 'recommendedClient',
+				populate: {
+					path: 'user',
+					select: ['name', 'lastName', 'avatar'],
+				},
+			});
 
 		const data = await Promise.all(
 			recommendation.map(async (rec) => {
-				const points = await Points.aggregate([
-					{
-						$match: {
-							state: true,
-							clientId: new ObjectId(rec.recommendedClient),
-						},
-					},
-					{
-						$group: {
-							_id: {
-								clientId: '$clientId',
-							},
-							totalPoints: {
-								$sum: '$points',
+				const targetClientId = rec.recommendedClient?._id || rec.recommendedClient;
+				let totalPoints = 0;
+
+				if (targetClientId) {
+					const points = await Points.aggregate([
+						{
+							$match: {
+								state: true,
+								clientId: new ObjectId(rec.clientId),
+								recommendedClientId: new ObjectId(targetClientId),
+								action: 'recommendation',
 							},
 						},
-					},
-					{
-						$project: {
-							_id: 0,
-							totalPoints: 1,
+						{
+							$group: {
+								_id: {
+									clientId: '$clientId',
+								},
+								totalPoints: {
+									$sum: '$points',
+								},
+							},
 						},
-					},
-				]);
+						{
+							$project: {
+								_id: 0,
+								totalPoints: 1,
+							},
+						},
+					]);
+					totalPoints = points[0]?.totalPoints || 0;
+				}
 
 				return {
 					...rec._doc,
-					points: points[0]?.totalPoints || 0,
+					points: totalPoints,
 				};
 			})
 		);
