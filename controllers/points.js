@@ -18,8 +18,23 @@ const getAllPoints = async (req, res = response) => {
 			Points.find(query)
 				.skip(Number(from))
 				.limit(Number(limit))
-				.populate('clientId'),
+				.populate({
+					path: 'clientId',
+					populate: {
+						path: 'user',
+						select: ['name', 'lastName', 'email'],
+					},
+				})
+				.populate({
+					path: 'recommendedClientId',
+					populate: {
+						path: 'user',
+						select: ['name', 'lastName', 'email'],
+					},
+				})
+				.populate('orderId'),
 		]);
+
 
 		res.status(200).json({
 			ok: true,

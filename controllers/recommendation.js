@@ -19,8 +19,23 @@ const getAllRecommendation = async (req, res = response) => {
 			Recommendation.find(query)
 				.skip(Number(from))
 				.limit(Number(limit))
-				.populate('clientId'),
+				.populate({
+					path: 'clientId',
+					populate: {
+						path: 'user',
+						select: ['name', 'lastName', 'email'],
+					},
+				})
+				.populate('recommendedUser', ['name', 'lastName', 'email'])
+				.populate({
+					path: 'recommendedClient',
+					populate: {
+						path: 'user',
+						select: ['name', 'lastName', 'email'],
+					},
+				}),
 		]);
+
 
 		res.status(200).json({
 			ok: true,
