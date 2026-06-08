@@ -22,6 +22,14 @@ const ConfigSchema = Schema(
 			type: Number,
 			default: 1, // Ej: 1 peso gastado = 1 punto
 		},
+		referralBannerUrl: {
+			type: String,
+			default: '',
+		},
+		referralBanners: {
+			type: [String],
+			default: [],
+		},
 
 		state: {
 			type: Boolean,
