@@ -77,8 +77,36 @@ const getOrdersPaginate = async (req, res = response) => {
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
-		const { limit = 10000, page = 1, active = 'false', paid } = req.query;
+		const { limit = 10000, page = 1, active = 'false', paid, badDebt } = req.query;
 		// active = "false"  => all
+
+		if (badDebt === 'true') {
+			const query = {
+				state: true,
+				badDebt: true,
+				superUser: tokenData.UserInfo.superUser,
+			};
+
+			const [total, orders] = await Promise.all([
+				Order.countDocuments(query),
+				Order.find(query)
+					.skip(Number((page - 1) * limit))
+					.limit(Number(limit * 1))
+					.populate('deliveryTruck')
+					.populate('employee')
+					.populate('deliveryZone')
+					.sort({ createdAt: -1 }),
+			]);
+
+			return res.status(200).json({
+				ok: true,
+				status: 200,
+				total,
+				data: {
+					orders,
+				},
+			});
+		}
 
 		if (active === 'true') {
 			const query = {
@@ -111,6 +139,7 @@ const getOrdersPaginate = async (req, res = response) => {
 			const query = {
 				state: true,
 				paid: false,
+				badDebt: { $ne: true },
 				superUser: tokenData.UserInfo.superUser,
 			};
 
@@ -1019,19 +1048,28 @@ const getOrdersActives = async (req, res = response) => {
 const getClientOrderDebt = async (req, res = response) => {
 	try {
 		const { id } = req.params;
+		const { badDebt } = req.query;
 		const jwt =
 			req.cookies.jwt_dashboard ||
 			req.cookies.jwt_tpv ||
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
-		const orders = await Order.find({
+		const query = {
 			state: true,
 			client: id,
 			paid: false,
 			status: 'Entregado',
 			superUser: tokenData.UserInfo.superUser,
-		});
+		};
+
+		if (badDebt === 'true') {
+			query.badDebt = true;
+		} else {
+			query.badDebt = { $ne: true };
+		}
+
+		const orders = await Order.find(query);
 
 		res.status(200).json({
 			ok: true,

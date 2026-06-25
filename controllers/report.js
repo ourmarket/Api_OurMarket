@@ -243,7 +243,19 @@ const reportTotalOrdersByDay = async (req, res = response) => {
 						$sum: '$payment.transfer',
 					},
 					totalDebt: {
-						$sum: '$payment.debt',
+						$sum: {
+							$cond: [
+								{
+									$and: [
+										{ $eq: ['$paid', false] },
+										{ $eq: ['$status', 'Entregado'] },
+										{ $ne: ['$badDebt', true] },
+									],
+								},
+								'$payment.debt',
+								0,
+							],
+						},
 					},
 				},
 			},
@@ -328,7 +340,19 @@ const reportTotalOrders = async (req, res = response) => {
 						$sum: '$payment.transfer',
 					},
 					totalDebt: {
-						$sum: '$payment.debt',
+						$sum: {
+							$cond: [
+								{
+									$and: [
+										{ $eq: ['$paid', false] },
+										{ $eq: ['$status', 'Entregado'] },
+										{ $ne: ['$badDebt', true] },
+									],
+								},
+								'$payment.debt',
+								0,
+							],
+						},
 					},
 				},
 			},
@@ -1592,7 +1616,19 @@ const reportPaymentByRangeDay = async (req, res = response) => {
 						$sum: '$payment.transfer',
 					},
 					debtTotal: {
-						$sum: '$payment.debt',
+						$sum: {
+							$cond: [
+								{
+									$and: [
+										{ $eq: ['$paid', false] },
+										{ $eq: ['$status', 'Entregado'] },
+										{ $ne: ['$badDebt', true] },
+									],
+								},
+								'$payment.debt',
+								0,
+							],
+						},
 					},
 					pointsDiscountTotal: {
 						$sum: '$pointsDiscount',
@@ -1934,6 +1970,7 @@ const reportTotalClientDebt = async (req, res = response) => {
 					state: true,
 					paid: false,
 					status: 'Entregado',
+					badDebt: { $ne: true },
 					superUser: new ObjectId(tokenData.UserInfo.superUser),
 				},
 			},

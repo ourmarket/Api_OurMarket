@@ -75,6 +75,7 @@ const OrderSchema = new Schema(
 		},
 
 		paid: { type: Boolean, default: false },
+		badDebt: { type: Boolean, default: false },
 		discount: { type: Number, default: 0 },
 		pointsUsed: { type: Number, default: 0 },
 		pointsDiscount: { type: Number, default: 0 },
