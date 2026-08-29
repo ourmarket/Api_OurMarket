@@ -27,6 +27,7 @@ const {
 } = require('../controllers/reports/categoryReport');
 const { deliveryOrders } = require('../controllers/reports/deliveryReport');
 const {
+	getExpensesKpisReport,
 	getTotalExpensesReport,
 	getByMonthExpensesReport,
 	getByMonthAndCategoryExpensesReport,
@@ -39,10 +40,19 @@ const {
 	totalPaymentByClientReport,
 } = require('../controllers/reports/clientsReport');
 const { reportTotalBuy } = require('../controllers/reports/buyReport');
+const {
+	getProfitabilityReport,
+	exportProfitabilityToExcel,
+} = require('../controllers/reports/profitabilityReport');
+const { validarJWT } = require('../middlewares');
 
 const router = Router();
 
 // /api/reports
+
+// Profitability & % GANANCIA (Hoja 2)
+router.get('/profitability', [validarJWT], getProfitabilityReport);
+router.get('/profitability/export-excel', [validarJWT], exportProfitabilityToExcel);
 
 // nuevas rutas con querys
 // category
@@ -92,6 +102,7 @@ router.get(
 router.post('/deliveryOrders/:id', deliveryOrders);
 
 // expenses
+router.get('/reportExpensesKpis', getExpensesKpisReport);
 router.get('/reportTotalExpenses', getTotalExpensesReport);
 router.get('/reportTotalExpensesByMonth', getByMonthExpensesReport);
 router.get(

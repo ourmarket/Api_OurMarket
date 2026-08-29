@@ -24,6 +24,7 @@ const Recommendation = require('./recommendation');
 const OrderActive = require('./orderActive');
 const Config = require('./config');
 const Expenses = require('./expenses');
+const ExpensesV2 = require('./expensesV2');
 const SuperUser = require('./superUser');
 const CashierSession = require('./cashierSession');
 const Buy = require('./buy');
@@ -56,9 +57,10 @@ module.exports = {
 	OrderActive,
 	Config,
 	Expenses,
+	ExpensesV2,
 	SuperUser,
 	CashierSession,
 	Buy,
 	Stock,
-	Negocio
+	Negocio,
 };

@@ -242,8 +242,9 @@ const existClientAddressById = async (id) => {
 	}
 };
 const existExpensesById = async (id) => {
-	// Verificar si el correo existe
-	const exist = await Expenses.findById(id);
+	const { getExpensesModel } = require('./expensesModelFactory');
+	const Model = getExpensesModel();
+	const exist = await Model.findById(id);
 	if (!exist) {
 		throw new Error(`El id no existe ${id}`);
 	}

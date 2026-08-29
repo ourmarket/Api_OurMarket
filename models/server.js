@@ -42,6 +42,8 @@ class Server {
 			reports: '/api/reports',
 			points: '/api/points',
 			recommendation: '/api/recommendation',
+			expenses: '/api/expenses',
+			expensesTemplates: '/api/expenses-templates',
 		};
 
 		// Conectar a base de datos
@@ -136,6 +138,11 @@ class Server {
 		this.app.use(
 			this.paths.recommendation,
 			require('../routes/recommendation')
+		);
+		this.app.use(this.paths.expenses, require('../routes/expenses'));
+		this.app.use(
+			this.paths.expensesTemplates,
+			require('../routes/expensesTemplate')
 		);
 	}
 
