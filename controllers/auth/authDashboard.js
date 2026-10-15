@@ -17,33 +17,59 @@ const loginDashboard = async (req, res) => {
 			return res.status(400).json({ msg: 'Email o password no son correctos' });
 		}
 
-		// Verificar client Id
-		const foundClientId = await SuperUser.findOne({ clientId });
+		let foundUser;
+		if (clientId) {
+			// Verificar client Id
+			const foundClientId = await SuperUser.findOne({ clientId });
 
-		if (!foundClientId) {
-			logger.error({
-				ip: req.clientIp,
+			if (!foundClientId) {
+				logger.error({
+					ip: req.clientIp,
+					email,
+					msg: `El Id: ${clientId} de cliente no encontrado`,
+				});
+				return res.status(400).json({
+					ok: false,
+					status: 401,
+					msg: `Id de cliente ${clientId} no encontrado`,
+				});
+			}
+
+			foundUser = await User.findOne({
 				email,
-				msg: `El Id: ${clientId} de cliente no encontrado`,
-			});
-			return res.status(400).json({
-				ok: false,
-				status: 401,
-				msg: `Id de cliente ${clientId} no encontrado`,
-			});
+				superUser: foundClientId._id,
+				state: true,
+			})
+				.populate('superUser')
+				.exec();
+		} else {
+			// Si no viene clientId, verificar si es usuario Super Administrador
+			const candidateUser = await User.findOne({
+				email,
+				state: true,
+			})
+				.populate('superUser')
+				.populate('role')
+				.exec();
+
+			const candidateRole = candidateUser?.role?.role;
+			if (
+				candidateUser &&
+				(candidateRole === 'SUPER_ADMIN_ROLE' ||
+					candidateRole === process.env.SUPER_ADMIN_ROLE)
+			) {
+				foundUser = candidateUser;
+			} else {
+				return res.status(400).json({
+					ok: false,
+					status: 401,
+					msg: 'El Id de cliente es obligatorio',
+				});
+			}
 		}
 
 		// Verificar si el email existe
 		let role;
-		const foundUser = await User.findOne({
-			email,
-			superUser: foundClientId._id,
-			role: '636a631dc2e277ca644463ff',
-			state: true,
-		})
-			.populate('superUser')
-			.exec();
-
 		if (foundUser) {
 			role = await Role.findById(foundUser.role);
 		} else {
@@ -69,19 +95,34 @@ const loginDashboard = async (req, res) => {
 				msg: 'Email o password no son correctos',
 			});
 		}
-		// SI no es admin
-		if (role.role !== process.env.ADMIN_ROLE) {
+
+		// Verificar si el rol es de cliente (solo clientes tienen bloqueado el acceso al dashboard)
+		const isClient =
+			role?.type === 'client' ||
+			role?.role === 'CLIENT_ROLE' ||
+			role?.role === process.env.CLIENT_ROLE;
+
+		if (isClient) {
 			logger.error({
 				ip: req.clientIp,
 				email,
-				msg: `Esta cuenta ${foundUser.email} no tiene permisos de acceso`,
+				msg: `Las cuentas con rol de cliente no tienen acceso al dashboard`,
 			});
 			return res.status(403).json({
 				ok: false,
 				status: 403,
-				msg: 'Esta cuenta no tiene permisos de acceso',
+				msg: 'Las cuentas con rol de cliente no tienen acceso al dashboard',
 			});
 		}
+
+		const isSuperAdmin =
+			role?.role === 'SUPER_ADMIN_ROLE' ||
+			role?.role === process.env.SUPER_ADMIN_ROLE;
+		const isAdmin =
+			role?.role === process.env.ADMIN_ROLE ||
+			role?.role === 'ADMIN_ROLE' ||
+			isSuperAdmin;
+		const permissions = isSuperAdmin ? ['*'] : isAdmin ? ['*'] : (role?.permissions || []);
 
 		// Verificar la contraseña
 		const validPassword = await bcryptjs.compare(password, foundUser.password);
@@ -92,7 +133,8 @@ const loginDashboard = async (req, res) => {
 				{
 					UserInfo: {
 						id: foundUser._id,
-						role: role.role,
+						role: role?.role,
+						permissions,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
 						superUserData: foundUser.superUser.superUserData,
@@ -105,7 +147,8 @@ const loginDashboard = async (req, res) => {
 				{
 					UserInfo: {
 						id: foundUser._id,
-						role: role.role,
+						role: role?.role,
+						permissions,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
 						superUserData: foundUser.superUser.superUserData,
@@ -121,10 +164,6 @@ const loginDashboard = async (req, res) => {
 				: foundUser.refreshToken.filter((rt) => rt !== cookies.jwt_dashboard);
 
 			if (cookies?.jwt_dashboard) {
-				/* Posibles escenarios:
-                1) El usuario inicia sesión pero nunca usa RT y no cierra la sesión
-                2) RT es robado
-                3) Si 1 y 2, hay que borrar todos los RT cuando el usuario inicia sesión */
 				const refreshToken = cookies.jwt_dashboard;
 				const foundToken = await User.findOne({ refreshToken }).exec();
 
@@ -153,10 +192,13 @@ const loginDashboard = async (req, res) => {
 				maxAge: 24 * 60 * 60 * 1000,
 			});
 
-			// Se envía el id del usuario y el rol en el token
+			// Se envía el id del usuario, rol y permisos
 			return res.status(200).json({
 				accessToken,
 				id: foundUser._id,
+				role: role?.role,
+				roleName: role?.es || role?.role,
+				permissions,
 				superUser: foundUser.superUser._id,
 				version: foundUser.superUser.version,
 				superUserData: foundUser.superUser.superUserData,
@@ -267,14 +309,37 @@ const refreshDashboard = async (req, res) => {
 			}
 
 			// Refresh token was still valid
-			// const roles = Object.values(foundUser.roles);
 			const role = await Role.findById(foundUser.role);
+
+			// Si es cliente, no tiene acceso al dashboard
+			const isClient =
+				role?.type === 'client' ||
+				role?.role === 'CLIENT_ROLE' ||
+				role?.role === process.env.CLIENT_ROLE;
+
+			if (isClient) {
+				return res.status(403).json({
+					ok: false,
+					status: 403,
+					msg: 'Las cuentas con rol de cliente no tienen acceso al dashboard',
+				});
+			}
+
+			const isSuperAdmin =
+				role?.role === 'SUPER_ADMIN_ROLE' ||
+				role?.role === process.env.SUPER_ADMIN_ROLE;
+			const isAdmin =
+				role?.role === process.env.ADMIN_ROLE ||
+				role?.role === 'ADMIN_ROLE' ||
+				isSuperAdmin;
+			const permissions = isSuperAdmin ? ['*'] : isAdmin ? ['*'] : (role?.permissions || []);
 
 			const accessToken = jwt.sign(
 				{
 					UserInfo: {
 						id: foundUser._id,
-						role: role.role,
+						role: role?.role,
+						permissions,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
 						superUserData: foundUser.superUser.superUserData,
@@ -288,7 +353,8 @@ const refreshDashboard = async (req, res) => {
 				{
 					UserInfo: {
 						id: foundUser._id,
-						role: role.role,
+						role: role?.role,
+						permissions,
 						superUser: foundUser.superUser._id,
 						version: foundUser.superUser.version,
 						superUserData: foundUser.superUser.superUserData,
@@ -317,6 +383,9 @@ const refreshDashboard = async (req, res) => {
 			return res.status(200).json({
 				accessToken,
 				id: foundUser._id,
+				role: role?.role,
+				roleName: role?.es || role?.role,
+				permissions,
 				superUser: foundUser.superUser._id,
 				version: foundUser.superUser.version,
 				clientType: client?.clientType?.clientType,

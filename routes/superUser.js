@@ -6,31 +6,31 @@ const {
 	putSuperUser,
 	deleteSuperUser,
 } = require('../controllers/superUser');
+const { validarJWT, isSuperAdminRole } = require('../middlewares');
 
 const router = Router();
 
 /**
  * {{url}}/api/superUser
+ * Todas las rutas de gestión de Tenants (SuperUsers)
+ * son privadas y exclusivas para usuarios con rol SUPER_ADMIN_ROLE.
  */
+router.use(validarJWT);
+router.use(isSuperAdminRole);
 
-//  Obtener todas las categorías - publico
+// Obtener todos los tenants
 router.get('/', getSuperUsers);
-// router.get('/update', update);
 
-// Obtener una categoría por id - publico
+// Obtener un tenant por id
 router.get('/:id', getSuperUser);
 
-// Crear categoría - privado - cualquier persona con un token válido
+// Crear nuevo tenant con su admin inicial y config
 router.post('/', postSuperUser);
 
-// Actualizar - privado - cualquiera con token válido
+// Actualizar datos del tenant
 router.put('/:id', putSuperUser);
 
-// Borrar una categoría - Admin
+// Cambiar estado (activar / desactivar)
 router.delete('/:id', deleteSuperUser);
 
 module.exports = router;
-
-/* 
-TODO Agregar validaciones y permisos
-*/

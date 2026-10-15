@@ -20,7 +20,7 @@ const postRoleValidation = [
 const putRoleValidation = [
 	validarJWT,
 	isAdminRole,
-	check('role', 'El rol es obligatorio').not().isEmpty(),
+	check('role', 'El rol no puede estar vacío').optional().not().isEmpty(),
 	check('id').custom(existRoleById),
 	validateFields,
 ];
