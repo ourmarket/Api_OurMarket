@@ -264,12 +264,15 @@ const postOrder = async (req, res = response) => {
 			req.cookies.jwt_deliveryApp;
 		const tokenData = getTokenData(jwt);
 
+		const safeClient = client && client !== '' ? client : null;
+		const safeUserId = body.userId && body.userId !== '' ? body.userId : null;
+
 		// 1. Configuración y Validación de Puntos
 		let pointsDiscount = 0;
 		const config = await Config.findOne({ superUser: tokenData.UserInfo.superUser, state: true });
 		
-		if (pointsUsed > 0 && client) {
-			const clientData = await Client.findById(client);
+		if (pointsUsed > 0 && safeClient) {
+			const clientData = await Client.findById(safeClient);
 			if (clientData && clientData.points >= pointsUsed) {
 				const conversionRate = config?.pointsConversionRate || 10;
 				pointsDiscount = pointsUsed / conversionRate;
@@ -343,15 +346,32 @@ const postOrder = async (req, res = response) => {
 		const finalTotal = body.total ? body.total - pointsDiscount : undefined;
 
 		// 3. Guardar la orden en DB
+		const shippingAddress = {
+			addressId: body.shippingAddress?.addressId || null,
+			name: body.shippingAddress?.name || (safeClient ? '' : 'Consumidor'),
+			lastName: body.shippingAddress?.lastName || (safeClient ? '' : 'Final'),
+			phone: body.shippingAddress?.phone || null,
+			address: body.shippingAddress?.address || (safeClient ? null : 'Venta en local'),
+			flor: body.shippingAddress?.flor || null,
+			department: body.shippingAddress?.department || null,
+			city: body.shippingAddress?.city || null,
+			province: body.shippingAddress?.province || null,
+			zip: body.shippingAddress?.zip || null,
+			lat: body.shippingAddress?.lat || null,
+			lng: body.shippingAddress?.lng || null,
+		};
+
 		const data = {
 			...body,
+			shippingAddress,
 			orderItems: orderItemsEdit,
 			paid,
 			subTotal: subTotal,
 			total: finalTotal,
-			pointsUsed,
-			pointsDiscount,
-			client,
+			pointsUsed: safeClient ? pointsUsed : 0,
+			pointsDiscount: safeClient ? pointsDiscount : 0,
+			client: safeClient,
+			userId: safeUserId,
 			superUser: tokenData.UserInfo.superUser,
 		};
 
@@ -359,19 +379,19 @@ const postOrder = async (req, res = response) => {
 		await order.save();
 
 		// 4. Lógica Post-Venta: Canje y Recompensa por Referido
-		if (pointsUsed > 0 && client) {
+		if (pointsUsed > 0 && safeClient) {
 			const newPointsRecord = new Points({
-				clientId: client,
+				clientId: safeClient,
 				points: -pointsUsed,
 				action: 'exchange',
 				orderId: order._id,
 				superUser: tokenData.UserInfo.superUser,
 			});
 			await newPointsRecord.save();
-			await Client.findByIdAndUpdate(client, { $inc: { points: -pointsUsed } });
+			await Client.findByIdAndUpdate(safeClient, { $inc: { points: -pointsUsed } });
 		}
 
-		if (paid && client) {
+		if (paid && safeClient) {
 			// 1. Acumular puntos para el comprador
 			const earnRate = config?.pointsPerPesoSpent !== undefined ? config.pointsPerPesoSpent : 1;
 			const pointsEarned = Math.trunc((subTotal || 0) * earnRate);
@@ -382,7 +402,7 @@ const postOrder = async (req, res = response) => {
 				expiresAt.setDate(expiresAt.getDate() + daysToExpire);
 
 				const buyPoints = new Points({
-					clientId: client,
+					clientId: safeClient,
 					points: pointsEarned,
 					action: 'buy',
 					orderId: order._id,
@@ -391,13 +411,13 @@ const postOrder = async (req, res = response) => {
 				});
 				await buyPoints.save();
 
-				await Client.findByIdAndUpdate(client, { $inc: { points: pointsEarned } });
+				await Client.findByIdAndUpdate(safeClient, { $inc: { points: pointsEarned } });
 			}
 
 			// 2. Revisar si es la primera compra (para recompensa por referido)
-			const previousOrdersCount = await Order.countDocuments({ client, paid: true, _id: { $ne: order._id } });
+			const previousOrdersCount = await Order.countDocuments({ client: safeClient, paid: true, _id: { $ne: order._id } });
 			if (previousOrdersCount === 0) {
-				const recommendation = await Recommendation.findOne({ recommendedClient: client, state: true });
+				const recommendation = await Recommendation.findOne({ recommendedClient: safeClient, state: true });
 				if (recommendation) {
 					const pointsToGive = config?.pointsPerReferral || 500;
 					const daysToExpire = config?.pointsExpirationDays || 90;
@@ -408,7 +428,7 @@ const postOrder = async (req, res = response) => {
 						clientId: recommendation.clientId,
 						points: pointsToGive,
 						action: 'recommendation',
-						recommendedClientId: client,
+						recommendedClientId: safeClient,
 						orderId: order._id,
 						expiresAt,
 						superUser: tokenData.UserInfo.superUser
@@ -527,6 +547,13 @@ const putOrder = async (req, res = response) => {
 				status: 404,
 				msg: 'Orden no encontrada',
 			});
+		}
+
+		if (data.client === '' || data.client === undefined) {
+			data.client = null;
+		}
+		if (data.userId === '' || data.userId === undefined) {
+			data.userId = null;
 		}
 
 		// --- LÓGICA DE PUNTOS ---

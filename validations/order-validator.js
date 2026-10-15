@@ -27,8 +27,14 @@ const getOrderClientValidator = [
 ];
 const postOrderValidator = [
 	validarJWT,
-	check('userId', 'No es un id de Mongo válido').isMongoId(),
-	check('userId').custom(existUserById),
+	check('userId', 'No es un id de Mongo válido')
+		.optional({ nullable: true, checkFalsy: true })
+		.isMongoId()
+		.custom(existUserById),
+	check('client', 'No es un id de Mongo válido')
+		.optional({ nullable: true, checkFalsy: true })
+		.isMongoId()
+		.custom(existClientById),
 	// orderItems
 	check('orderItems[0].productId', 'No es un id de Mongo válido').isMongoId(),
 	check('orderItems[0].productId').custom(existProductById),
@@ -38,28 +44,34 @@ const postOrderValidator = [
 	check('orderItems[0].totalPrice', 'El precio es obligatorio').not().isEmpty(),
 	check('orderItems[0].unitPrice', 'El precio es obligatorio').not().isEmpty(),
 	// shippingAddress
-	check('shippingAddress.name', 'El nombre  es obligatorio').not().isEmpty(),
-	check('shippingAddress.lastName', 'El apellido  es obligatorio')
-		.not()
-		.isEmpty(),
-	check('shippingAddress.phone', 'El telefono  es obligatorio').not().isEmpty(),
+	check('shippingAddress.name', 'El nombre es obligatorio')
+		.optional({ nullable: true }),
+	check('shippingAddress.lastName', 'El apellido es obligatorio')
+		.optional({ nullable: true }),
+	check('shippingAddress.phone', 'El telefono es obligatorio')
+		.optional({ nullable: true }),
 	check('shippingAddress.address', 'La dirección es obligatoria')
-		.not()
-		.isEmpty(),
+		.optional({ nullable: true }),
 	// other info
 
 	check('numberOfItems', 'El numero de productos es obligatorio')
 		.not()
 		.isEmpty(),
-	check('subTotal', 'El subtotal  es obligatorio').not().isEmpty(),
-	check('total', 'El total  es obligatorio').not().isEmpty(),
+	check('subTotal', 'El subtotal es obligatorio').not().isEmpty(),
+	check('total', 'El total es obligatorio').not().isEmpty(),
 
 	validateFields,
 ];
 const postOrderLocalValidator = [
 	validarJWT,
-	/* check('userId', 'No es un id de Mongo válido').isMongoId(),
-	check('userId').custom(existUserById), */
+	check('userId', 'No es un id de Mongo válido')
+		.optional({ nullable: true, checkFalsy: true })
+		.isMongoId()
+		.custom(existUserById),
+	check('client', 'No es un id de Mongo válido')
+		.optional({ nullable: true, checkFalsy: true })
+		.isMongoId()
+		.custom(existClientById),
 	// orderItems
 	check('orderItems[0].productId', 'No es un id de Mongo válido').isMongoId(),
 	check('orderItems[0].productId').custom(existProductById),
@@ -72,8 +84,8 @@ const postOrderLocalValidator = [
 	check('numberOfItems', 'El numero de productos es obligatorio')
 		.not()
 		.isEmpty(),
-	check('subTotal', 'El subtotal  es obligatorio').not().isEmpty(),
-	check('total', 'El total  es obligatorio').not().isEmpty(),
+	check('subTotal', 'El subtotal es obligatorio').not().isEmpty(),
+	check('total', 'El total es obligatorio').not().isEmpty(),
 
 	validateFields,
 ];
