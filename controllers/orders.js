@@ -549,10 +549,16 @@ const putOrder = async (req, res = response) => {
 			});
 		}
 
-		if (data.client === '' || data.client === undefined) {
+		// Si en el body no se envió client o userId, conservamos los de la orden existente
+		if (data.client === undefined) {
+			data.client = oldOrder.client;
+		} else if (data.client === '') {
 			data.client = null;
 		}
-		if (data.userId === '' || data.userId === undefined) {
+
+		if (data.userId === undefined) {
+			data.userId = oldOrder.userId;
+		} else if (data.userId === '') {
 			data.userId = null;
 		}
 
