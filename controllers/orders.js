@@ -363,6 +363,9 @@ const postOrder = async (req, res = response) => {
 
 		const data = {
 			...body,
+			deliveryZone: body.deliveryZone && body.deliveryZone !== '' && body.deliveryZone !== 'null' ? body.deliveryZone : null,
+			deliveryTruck: body.deliveryTruck && body.deliveryTruck !== '' && body.deliveryTruck !== 'null' ? body.deliveryTruck : null,
+			employee: body.employee && body.employee !== '' && body.employee !== 'null' ? body.employee : null,
 			shippingAddress,
 			orderItems: orderItemsEdit,
 			paid,
@@ -560,6 +563,20 @@ const putOrder = async (req, res = response) => {
 			data.userId = oldOrder.userId;
 		} else if (data.userId === '') {
 			data.userId = null;
+		}
+
+		// Sanitizar referencias ObjectId para evitar Cast to ObjectId failed con strings vacíos
+		if (data.deliveryZone === '' || data.deliveryZone === 'null') {
+			data.deliveryZone = null;
+		}
+		if (data.deliveryTruck === '' || data.deliveryTruck === 'null') {
+			data.deliveryTruck = null;
+		}
+		if (data.employee === '' || data.employee === 'null') {
+			data.employee = null;
+		}
+		if (data.shippingAddress && (data.shippingAddress.addressId === '' || data.shippingAddress.addressId === 'null')) {
+			data.shippingAddress.addressId = null;
 		}
 
 		// --- LÓGICA DE PUNTOS ---
